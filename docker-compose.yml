@@ -1,5 +1,47 @@
 services:
-  # ── Map Service ──────────────────────────────────────────
+  # ══════════════════════════════════════════════════════════
+  # INFRASTRUCTURE
+  # ══════════════════════════════════════════════════════════
+
+  # Shared PostgreSQL for Locomotive + Normalization (realtime_ktzh)
+  postgres:
+    image: postgres:16-alpine
+    container_name: ktzh_postgres
+    restart: unless-stopped
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: realtime_ktzh
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Auth service PostgreSQL (auth_db)
+  auth-db:
+    image: postgres:16-alpine
+    container_name: ktzh_auth_db
+    restart: unless-stopped
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_db
+    volumes:
+      - auth_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Map service PostgreSQL (map)
   map-db:
     image: postgres:16-alpine
     container_name: ktzh_map_db
@@ -18,6 +60,55 @@ services:
       timeout: 3s
       retries: 5
 
+  # RabbitMQ message broker
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: ktzh_rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ══════════════════════════════════════════════════════════
+  # BACKEND SERVICES
+  # ══════════════════════════════════════════════════════════
+
+  auth-service:
+    build:
+      context: ./server/auth-service
+      dockerfile: Dockerfile
+    container_name: ktzh_auth_service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      PORT: 8081
+      NODE_ENV: production
+      DB_HOST: auth-db
+      DB_PORT: 5432
+      DB_NAME: auth_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      JWT_ACCESS_SECRET: ktzh-access-secret-change-in-prod
+      JWT_REFRESH_SECRET: ktzh-refresh-secret-change-in-prod
+      JWT_ACCESS_EXPIRES: 15m
+      JWT_REFRESH_EXPIRES: 7d
+      FRONTEND_URL: http://localhost:3000
+      CORS_ORIGIN: http://localhost:3000
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
   map-service:
     build:
       context: ./server/map
@@ -27,7 +118,7 @@ services:
     ports:
       - "8082:8082"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 8082
       DB_HOST: map-db
       DB_PORT: 5432
@@ -38,5 +129,128 @@ services:
       map-db:
         condition: service_healthy
 
+  locomotive:
+    build:
+      context: ./server/locomotive
+      dockerfile: Dockerfile
+    container_name: ktzh_locomotive
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      PORT: 8083
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: realtime_ktzh
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_SCHEMA: locomotive
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  normalization:
+    build:
+      context: ./server/normalization
+      dockerfile: Dockerfile
+    container_name: ktzh_normalization
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+      - "8086:8086"
+    environment:
+      PORT: 8085
+      WS_PORT: 8086
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: realtime_ktzh
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_SCHEMA: normalization
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      locomotive:
+        condition: service_started
+
+  telemetry-simulator:
+    build:
+      context: ./server/telemetry-simulator
+      dockerfile: Dockerfile
+    container_name: ktzh_simulator
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      PORT: 8084
+      LOCOMOTIVE_SERVICE_URL: http://locomotive:8083
+      TICK_INTERVAL_MS: 1000
+      KZ8A_LOCOMOTIVE_ID: KTZ-4021
+      TE33A_LOCOMOTIVE_ID: KTZ-7015
+      LOG_LEVEL: info
+    depends_on:
+      locomotive:
+        condition: service_started
+
+  # ══════════════════════════════════════════════════════════
+  # API GATEWAY
+  # ══════════════════════════════════════════════════════════
+
+  gateway:
+    build:
+      context: ./server/gateway
+      dockerfile: Dockerfile
+    container_name: ktzh_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      AUTH_URL: http://auth-service:8081
+      MAP_URL: http://map-service:8082
+      LOCOMOTIVE_URL: http://locomotive:8083
+      NORMALIZATION_URL: http://normalization:8085
+      NORMALIZATION_WS_URL: http://normalization:8086
+      JWT_ACCESS_SECRET: ktzh-access-secret-change-in-prod
+      CORS_ORIGIN: http://localhost:3000
+    depends_on:
+      - auth-service
+      - map-service
+      - locomotive
+      - normalization
+
+  # ══════════════════════════════════════════════════════════
+  # FRONTEND
+  # ══════════════════════════════════════════════════════════
+
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+      args:
+        VITE_USE_MOCK: "false"
+        VITE_WS_URL: ws://localhost:8080
+        VITE_AUTH_API_URL: http://localhost:8080
+        VITE_MAP_API_URL: http://localhost:8080
+        VITE_LOCOMOTIVE_API_URL: http://localhost:8080
+        VITE_NORMALIZATION_API_URL: http://localhost:8080
+    container_name: ktzh_frontend
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    depends_on:
+      - gateway
+
 volumes:
+  pg_data:
+  auth_pg_data:
   map_pg_data:
+  rabbitmq_data:

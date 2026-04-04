@@ -1,13 +1,13 @@
 import type { LocomotiveModel } from '@/types';
 
-export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws';
+export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8086';
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
-// Backend service base URLs
-export const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8080';
+// Backend service base URLs (defaults for dev without API Gateway)
+export const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8081';
 export const MAP_API_URL = import.meta.env.VITE_MAP_API_URL || 'http://localhost:8082';
-export const LOCOMOTIVE_API_URL = import.meta.env.VITE_LOCOMOTIVE_API_URL || 'http://localhost:8080';
-export const NORMALIZATION_API_URL = import.meta.env.VITE_NORMALIZATION_API_URL || 'http://localhost:8080';
+export const LOCOMOTIVE_API_URL = import.meta.env.VITE_LOCOMOTIVE_API_URL || 'http://localhost:8083';
+export const NORMALIZATION_API_URL = import.meta.env.VITE_NORMALIZATION_API_URL || 'http://localhost:8085';
 
 export const MAX_CHART_POINTS = 300;
 export const MAX_ALERTS = 200;
