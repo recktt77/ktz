@@ -2,6 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Cyrillic fonts for PDF reports (Kazakh + Russian)
+RUN apk add --no-cache fontconfig ttf-dejavu
+
 # Install dependencies first (better layer caching)
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
@@ -11,8 +14,8 @@ COPY . .
 
 # Non-root user
 RUN addgroup -g 1001 appgroup && \
-    adduser -u 1001 -G appgroup -s /bin/sh -D appuser && \
-    chown -R appuser:appgroup /app
+  adduser -u 1001 -G appgroup -s /bin/sh -D appuser && \
+  chown -R appuser:appgroup /app
 USER appuser
 
 EXPOSE 8085 8086
