@@ -9,3 +9,10 @@ export type { FleetEntry, KZ8AFleetEntry, TE33AFleetEntry } from './fleet';
 export { isKZ8AFleet, isTE33AFleet } from './fleet';
 export type { DispatcherOverlay, SubscriptionContext, SupervisorDecision } from './roles';
 export type { WSMessage, SnapshotPayload, LocomotiveSnapshot, LocomotiveStatusUpdate } from './ws';
+
+// Auth Service types
+export type { AuthUser, LoginRequest, LoginResponse, RegisterRequest, Invitation, Station } from './auth';
+
+// Map Service types
+export type { Railway, MapStation, TrackSegment, StationTrackCoverage, SpeedLimit, MapOverview, LocomotivePosition } from './map';
+

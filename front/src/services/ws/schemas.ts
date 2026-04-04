@@ -248,6 +248,11 @@ export const wsMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('route_context_update'), payload: routeSchema }),
   z.object({ type: z.literal('dispatcher_overlay_update'), payload: dispatcherOverlaySchema }),
   z.object({ type: z.literal('fleet_summary_update'), payload: z.array(fleetEntrySchema) }),
+  z.object({ type: z.literal('locomotive_status_update'), payload: z.object({
+    locomotive_id: z.string(),
+    operational_status_summary: z.string(),
+    timestamp_utc: z.string(),
+  }) }),
   z.object({ type: z.literal('pong'), payload: z.null() }),
 ]);
 

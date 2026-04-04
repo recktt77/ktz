@@ -3,6 +3,12 @@ import type { LocomotiveModel } from '@/types';
 export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws';
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
+// Backend service base URLs
+export const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:3001/api';
+export const MAP_API_URL = import.meta.env.VITE_MAP_API_URL || 'http://localhost:3002/api';
+export const LOCOMOTIVE_API_URL = import.meta.env.VITE_LOCOMOTIVE_API_URL || 'http://localhost:3003/api';
+export const NORMALIZATION_API_URL = import.meta.env.VITE_NORMALIZATION_API_URL || 'http://localhost:3004/api';
+
 export const MAX_CHART_POINTS = 300;
 export const MAX_ALERTS = 200;
 
@@ -10,6 +16,31 @@ export const RECONNECT_BASE_MS = 1000;
 export const RECONNECT_MAX_MS = 30000;
 export const HEARTBEAT_INTERVAL_MS = 15000;
 export const HEARTBEAT_TIMEOUT_MS = 5000;
+
+/**
+ * Backend WebSocket channel paths (Normalization Service).
+ * Used when connecting to real backend instead of mock.
+ *   /ws/live                        — raw live stream
+ *   /ws/driver/{locomotiveId}       — driver role view
+ *   /ws/dispatcher                  — dispatcher fleet view
+ *   /ws/engineer/{locomotiveId}     — engineer diagnostics
+ *   /ws/supervisor                  — supervisor fleet summary
+ */
+export function getWsChannelUrl(role: string, locomotiveId?: string): string {
+  const base = WS_URL.replace(/\/ws\/?$/, '');
+  switch (role) {
+    case 'driver':
+      return `${base}/ws/driver/${locomotiveId ?? ''}`;
+    case 'dispatcher':
+      return `${base}/ws/dispatcher`;
+    case 'engineer':
+      return `${base}/ws/engineer/${locomotiveId ?? ''}`;
+    case 'supervisor':
+      return `${base}/ws/supervisor`;
+    default:
+      return `${base}/ws/live`;
+  }
+}
 
 /** Which numeric fields to track in chart history, per model */
 export const CHART_METRICS: Record<LocomotiveModel, string[]> = {
