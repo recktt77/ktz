@@ -1,12 +1,11 @@
 import { useProcessed } from '@/hooks/useTelemetry';
-import { Card } from '@/components/Card';
 import { Skeleton } from '@/components/Skeleton';
 import clsx from 'clsx';
 
 const styles = {
-  Good: { text: 'text-emerald-400', bg: 'from-emerald-500/10 to-transparent' },
-  Warning: { text: 'text-amber-400', bg: 'from-amber-500/10 to-transparent' },
-  Critical: { text: 'text-red-500', bg: 'from-red-500/10 to-transparent' },
+  Good: { text: 'color: var(--status-normal)', glow: 'panel--glow-normal', accent: '--status-normal' },
+  Warning: { text: 'color: var(--status-warning)', glow: 'panel--glow-warning', accent: '--status-warning' },
+  Critical: { text: 'color: var(--status-critical)', glow: 'panel--glow-critical', accent: '--status-critical' },
 };
 
 interface Props {
@@ -20,29 +19,54 @@ export function HealthCard({ locoId, compact }: Props) {
   if (!processed) return <Skeleton className="h-40 rounded-2xl" />;
 
   const s = styles[processed.health_status];
+  const pct = processed.health_index;
+
+  // SVG ring gauge
+  const size = compact ? 100 : 130;
+  const stroke = compact ? 8 : 10;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <Card className={clsx('relative overflow-hidden bg-gradient-to-br', s.bg)}>
-      <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
-        Health Index
-      </div>
-      <div
-        className={clsx(
-          'mt-2 font-bold tabular-nums',
-          s.text,
-          compact ? 'text-3xl' : 'text-5xl',
-        )}
-      >
-        {processed.health_index}
-      </div>
-      <div className={clsx('mt-1 text-sm font-semibold', s.text)}>
-        {processed.health_status}
+    <div className={clsx('panel p-5 flex flex-col items-center', s.glow)}>
+      <div className="health-gauge">
+        <svg width={size} height={size} className="health-gauge__ring" style={{ transform: 'rotate(-90deg)' }}>
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={stroke}
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={`var(${s.accent})`}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 1s ease-out', filter: `drop-shadow(0 0 6px var(${s.accent}))` }}
+          />
+        </svg>
+        <div className="health-gauge__value" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <span className="health-gauge__number" style={{ [s.text.split(':')[0]]: s.text.split(':')[1], fontSize: compact ? '1.8rem' : '2.4rem', fontWeight: 800 }}>
+            {pct}
+          </span>
+          <span className="health-gauge__label">
+            {processed.health_status}
+          </span>
+        </div>
       </div>
       {!compact && 'recommended_action' in processed && (
-        <div className="mt-3 text-xs leading-relaxed text-gray-400">
+        <div className="mt-3 text-center text-xs leading-relaxed" style={{ color: 'var(--text-muted)', maxWidth: 200 }}>
           {(processed as { recommended_action: string }).recommended_action}
         </div>
       )}
-    </Card>
+    </div>
   );
 }

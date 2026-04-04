@@ -37,9 +37,7 @@ export function EngineerTE33APanel({ locoId }: Props) {
 
       {/* System status badges */}
       <Card>
-        <div className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-          Subsystem Status
-        </div>
+        <div className="kpi-card__label mb-2">Subsystem Status</div>
         <div className="flex flex-wrap gap-2">
           <Badge label="Engine" status={t.engine_status} />
           <Badge label="Propulsion" status={t.propulsion_system_status} />
@@ -49,7 +47,7 @@ export function EngineerTE33APanel({ locoId }: Props) {
           <Badge label="Auxiliaries" status={t.auxiliaries_status} />
         </div>
         {t.remote_diagnostic_alert && (
-          <div className="mt-2 rounded bg-amber-500/10 px-3 py-1.5 text-xs text-amber-400">
+          <div className="mt-2 rounded px-3 py-1.5 text-xs" style={{ background: 'rgba(245,185,70,0.08)', color: 'var(--status-warning)' }}>
             Remote diagnostic: {t.remote_diagnostic_alert}
           </div>
         )}
@@ -66,20 +64,18 @@ export function EngineerTE33APanel({ locoId }: Props) {
       {/* Root cause analysis */}
       {p && p.root_cause_candidates.length > 0 && (
         <Card>
-          <div className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400">
-            Root Cause Analysis
-          </div>
+          <div className="kpi-card__label mb-3">Root Cause Analysis</div>
           <div className="space-y-3">
             {p.root_cause_candidates.map((rc, i) => (
               <div key={i} className="flex items-start gap-3">
-                <span className="mt-0.5 rounded bg-red-500/20 px-1.5 py-0.5 text-xs font-bold text-red-400">
+                <span className="mt-0.5 rounded px-1.5 py-0.5 text-xs font-bold" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--status-critical)' }}>
                   {(rc.probability * 100).toFixed(0)}%
                 </span>
                 <div>
-                  <div className="text-sm font-medium text-gray-200">
+                  <div className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                     {rc.component.replace(/_/g, ' ')}
                   </div>
-                  <div className="text-xs text-gray-400">{rc.description}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{rc.description}</div>
                 </div>
               </div>
             ))}
@@ -90,14 +86,12 @@ export function EngineerTE33APanel({ locoId }: Props) {
       {/* Top factors */}
       {p && p.top_factors.length > 0 && (
         <Card>
-          <div className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400">
-            Top Contributing Factors
-          </div>
+          <div className="kpi-card__label mb-3">Top Contributing Factors</div>
           <div className="space-y-2">
             {p.top_factors.map((f, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-gray-300">{f.detail}</span>
-                <span className="font-bold text-red-400">{f.impact}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{f.detail}</span>
+                <span className="font-bold" style={{ color: 'var(--status-critical)' }}>{f.impact}</span>
               </div>
             ))}
           </div>
@@ -106,11 +100,11 @@ export function EngineerTE33APanel({ locoId }: Props) {
 
       {/* Maintenance recommendation */}
       {p?.recommended_maintenance_action && (
-        <Card className="border-amber-500/20 bg-amber-500/5">
-          <div className="mb-1 text-xs font-medium uppercase tracking-wider text-amber-400">
+        <Card className="panel--glow-warning">
+          <div className="kpi-card__label mb-1" style={{ color: 'var(--status-warning)' }}>
             Maintenance Recommendation
           </div>
-          <div className="text-sm text-gray-300">
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {p.recommended_maintenance_action}
           </div>
         </Card>
@@ -124,15 +118,16 @@ function ScoreCard({ label, value, invert }: { label: string; value: number; inv
   const isBad = invert ? value > 60 : value < 40;
 
   return (
-    <Card className="py-3">
-      <div className="text-xs text-gray-400 truncate">{label}</div>
+    <div className="score-card">
+      <div className="score-card__label">{label}</div>
       <div
-        className={`mt-1 text-2xl font-bold tabular-nums ${
-          isBad ? 'text-red-400' : isGood ? 'text-emerald-400' : 'text-amber-400'
-        }`}
+        className="score-card__value"
+        style={{
+          color: isBad ? 'var(--status-critical)' : isGood ? 'var(--status-normal)' : 'var(--status-warning)',
+        }}
       >
         {value.toFixed(0)}
       </div>
-    </Card>
+    </div>
   );
 }

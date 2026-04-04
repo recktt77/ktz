@@ -1,8 +1,6 @@
 import { useDashboardStore } from '@/store';
 import { Card } from '@/components/Card';
 import { ProgressBar } from '@/components/ProgressBar';
-import { format } from 'date-fns';
-import type { RouteContext as RouteContextType } from '@/types';
 
 interface Props {
   locoId: string | null;
@@ -16,10 +14,8 @@ export function RouteContextWidget({ locoId }: Props) {
   if (!route) {
     return (
       <Card>
-        <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
-          Route
-        </div>
-        <div className="mt-4 py-4 text-center text-sm text-gray-600">
+        <div className="kpi-card__label">Route</div>
+        <div className="mt-4 py-4 text-center text-sm" style={{ color: 'var(--text-dim)' }}>
           No route data
         </div>
       </Card>
@@ -30,30 +26,28 @@ export function RouteContextWidget({ locoId }: Props) {
 
   return (
     <Card>
-      <div className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400">
-        Route
-      </div>
+      <div className="kpi-card__label mb-3">Route</div>
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-white">{route.from}</span>
-        <span className="text-gray-500">→</span>
-        <span className="font-medium text-white">{route.to}</span>
+        <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{route.from}</span>
+        <span style={{ color: 'var(--text-dim)' }}>→</span>
+        <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{route.to}</span>
       </div>
       <div className="mt-3">
-        <ProgressBar value={progress} />
+        <ProgressBar value={progress} color="cyan" />
       </div>
-      <div className="mt-2 flex justify-between text-xs text-gray-400">
+      <div className="mt-2 flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
         <span>{route.position_km.toFixed(1)} km</span>
         <span>{route.totalKm} km</span>
       </div>
-      <div className="mt-2 flex justify-between text-xs text-gray-500">
+      <div className="mt-2 flex justify-between text-xs" style={{ color: 'var(--text-dim)' }}>
         <span>
           Deviation:{' '}
           <span
-            className={
-              route.schedule_deviation_min > 3
-                ? 'text-amber-400'
-                : 'text-emerald-400'
-            }
+            style={{
+              color: route.schedule_deviation_min > 3
+                ? 'var(--status-warning)'
+                : 'var(--status-normal)',
+            }}
           >
             {route.schedule_deviation_min > 0 ? '+' : ''}
             {route.schedule_deviation_min.toFixed(1)} min

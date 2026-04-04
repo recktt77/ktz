@@ -1,5 +1,4 @@
 import { useDashboardStore } from '@/store';
-import { Card } from '@/components/Card';
 import clsx from 'clsx';
 
 export function FleetSummaryBar() {
@@ -13,26 +12,27 @@ export function FleetSummaryBar() {
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-      <SummaryTile label="Total Fleet" value={total} />
-      <SummaryTile label="Good" value={good} color="text-emerald-400" />
-      <SummaryTile label="Warning" value={warning} color="text-amber-400" />
-      <SummaryTile label="Critical" value={critical} color="text-red-400" />
-      <SummaryTile label="Avg Health" value={avgHealth.toFixed(0)} color={
-        avgHealth >= 80 ? 'text-emerald-400' : avgHealth >= 50 ? 'text-amber-400' : 'text-red-400'
-      } />
+      <SummaryTile label="Total Fleet" value={total} accent="kpi-card--cyan" />
+      <SummaryTile label="Good" value={good} accent="kpi-card--normal" color="var(--status-normal)" />
+      <SummaryTile label="Warning" value={warning} accent="kpi-card--amber" color="var(--status-warning)" />
+      <SummaryTile label="Critical" value={critical} accent="kpi-card--critical" color="var(--status-critical)" />
+      <SummaryTile
+        label="Avg Health"
+        value={avgHealth.toFixed(0)}
+        accent={avgHealth >= 80 ? 'kpi-card--normal' : avgHealth >= 50 ? 'kpi-card--amber' : 'kpi-card--critical'}
+        color={avgHealth >= 80 ? 'var(--status-normal)' : avgHealth >= 50 ? 'var(--status-warning)' : 'var(--status-critical)'}
+      />
     </div>
   );
 }
 
-function SummaryTile({ label, value, color }: { label: string; value: number | string; color?: string }) {
+function SummaryTile({ label, value, accent, color }: { label: string; value: number | string; accent: string; color?: string }) {
   return (
-    <Card className="text-center">
-      <div className="text-xs font-medium uppercase tracking-wider text-gray-400">
-        {label}
-      </div>
-      <div className={clsx('mt-1 text-3xl font-bold tabular-nums', color || 'text-white')}>
+    <div className={clsx('kpi-card text-center', accent)}>
+      <div className="kpi-card__label">{label}</div>
+      <div className="kpi-card__value" style={{ color: color || 'var(--text-primary)' }}>
         {value}
       </div>
-    </Card>
+    </div>
   );
 }

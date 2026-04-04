@@ -1,6 +1,5 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { useChartHistory } from '@/hooks/useTelemetry';
-import { Card } from '@/components/Card';
 import { METRIC_LABELS, METRIC_UNITS } from '@/lib/constants';
 import {
   createChart,
@@ -37,19 +36,19 @@ export function TelemetryChart({
       height,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#6b7280',
+        textColor: '#5a6478',
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: 'rgba(255,255,255,0.04)' },
-        horzLines: { color: 'rgba(255,255,255,0.04)' },
+        vertLines: { color: 'rgba(255,255,255,0.03)' },
+        horzLines: { color: 'rgba(255,255,255,0.03)' },
       },
       timeScale: {
         timeVisible: true,
         secondsVisible: true,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'rgba(255,255,255,0.06)',
       },
-      rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)' },
+      rightPriceScale: { borderColor: 'rgba(255,255,255,0.06)' },
     });
 
     const series = chart.addSeries(LineSeries, {
@@ -97,12 +96,12 @@ export function TelemetryChart({
   const unit = METRIC_UNITS[metricKey] || '';
 
   return (
-    <Card>
-      <div className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
+    <div className="chart-card">
+      <div className="chart-card__header">
         {label}
         {unit && ` (${unit})`}
       </div>
       <div ref={containerRef} />
-    </Card>
+    </div>
   );
 }

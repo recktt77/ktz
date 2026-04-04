@@ -9,16 +9,14 @@ export function DispatcherDashboard() {
   const selectedId = useDashboardStore((s) => s.selectedLocomotiveId);
 
   return (
-    <div className="space-y-4">
+    <div className="animate-fade-in space-y-4">
       {/* Railway map — primary dispatch view */}
       <RailwayMap className="w-full" />
 
       <div className="grid grid-cols-12 gap-4">
         {/* Left: locomotive list */}
         <div className="col-span-12 lg:col-span-4">
-          <div className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-            Fleet
-          </div>
+          <div className="kpi-card__label mb-2">Fleet</div>
           <LocomotiveList />
         </div>
 
@@ -30,7 +28,10 @@ export function DispatcherDashboard() {
               <RouteContextWidget locoId={selectedId} />
             </>
           ) : (
-            <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-gray-700 text-sm text-gray-600">
+            <div
+              className="panel flex h-64 items-center justify-center text-sm"
+              style={{ color: 'var(--text-dim)', borderStyle: 'dashed' }}
+            >
               Select a locomotive from the list
             </div>
           )}

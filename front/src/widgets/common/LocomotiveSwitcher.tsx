@@ -12,7 +12,7 @@ export function LocomotiveSwitcher() {
   if (locoIds.length <= 1) return null;
 
   return (
-    <div className="flex gap-1 rounded-lg bg-gray-800 p-1">
+    <div className="switcher-pill">
       {locoIds.map((id) => {
         const t = telemetry[id];
         const p = processed[id];
@@ -23,26 +23,28 @@ export function LocomotiveSwitcher() {
             key={id}
             onClick={() => selectLocomotive(id)}
             className={clsx(
-              'flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-              selectedId === id
-                ? 'bg-gray-700 text-white'
-                : 'text-gray-400 hover:text-gray-200',
+              'switcher-pill__btn flex items-center gap-2',
+              selectedId === id && 'switcher-pill__btn--active',
             )}
           >
             <span>{id}</span>
-            <span className="rounded bg-gray-600 px-1 py-0.5 text-[10px]">
+            <span
+              className="rounded px-1 py-0.5"
+              style={{ fontSize: '0.6rem', background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}
+            >
               {t.locomotive_model}
             </span>
             {p && (
               <span
-                className={clsx(
-                  'tabular-nums font-bold',
-                  p.health_index >= 80
-                    ? 'text-emerald-400'
-                    : p.health_index >= 50
-                      ? 'text-amber-400'
-                      : 'text-red-400',
-                )}
+                className="font-bold tabular-nums"
+                style={{
+                  color:
+                    p.health_index >= 80
+                      ? 'var(--status-normal)'
+                      : p.health_index >= 50
+                        ? 'var(--status-warning)'
+                        : 'var(--status-critical)',
+                }}
               >
                 {p.health_index}
               </span>
