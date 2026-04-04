@@ -1,10 +1,18 @@
-node_modules
-dist
-.DS_Store
-front/.env
-front/tsconfig.tsbuildinfo
+# dependencies
+**/node_modules/
 
-# Server env files
-server/**/.env
-*.env
-!*.env.example
+# build
+**/dist/
+**/build/
+
+# env files
+**/.env
+**/.env.*
+!**/.env.example
+
+# macOS
+**/.DS_Store
+.DS_Store
+
+# ts build cache
+**/*.tsbuildinfo
