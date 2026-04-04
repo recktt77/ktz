@@ -23,7 +23,7 @@ export function AlertsPanel({ locomotiveId }: Props) {
   return (
     <div className="alert-rail">
       <div className="alert-rail__title">
-        Alerts
+        Оповещения
         {active.length > 0 && (
           <span className="alert-rail__count">{active.length}</span>
         )}
@@ -31,7 +31,7 @@ export function AlertsPanel({ locomotiveId }: Props) {
       <div className="space-y-1.5 overflow-y-auto" style={{ maxHeight: 360 }}>
         {alerts.length === 0 ? (
           <div className="py-8 text-center text-sm" style={{ color: 'var(--text-dim)' }}>
-            No alerts
+            Нет оповещений
           </div>
         ) : (
           alerts.map((alert) => (

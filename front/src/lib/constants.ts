@@ -84,28 +84,29 @@ export const METRIC_UNITS: Record<string, string> = {
 };
 
 export const METRIC_LABELS: Record<string, string> = {
-  speed_kmh: 'Speed',
-  catenary_voltage_kv: 'Catenary Voltage',
-  catenary_current_a: 'Catenary Current',
-  main_transformer_temp_c: 'Transformer Temp',
-  main_transformer_load_pct: 'Transformer Load',
-  traction_converter_temp_c: 'Converter Temp',
-  traction_converter_load_pct: 'Converter Load',
-  tractive_effort_kn: 'Tractive Effort',
-  regenerative_braking_power_kw: 'Regen Power',
-  energy_consumption_kw: 'Energy Consumption',
-  brake_system_pressure_bar: 'Brake Pressure',
-  engine_rpm: 'Engine RPM',
-  engine_load_pct: 'Engine Load',
-  fuel_level_pct: 'Fuel Level',
-  fuel_consumption_lph: 'Fuel Consumption',
+  speed_kmh: 'Скорость',
+  catenary_voltage_kv: 'Напряжение сети',
+  catenary_current_a: 'Ток контактной сети',
+  main_transformer_temp_c: 'Темп. трансформатора',
+  main_transformer_load_pct: 'Нагрузка трансформатора',
+  traction_converter_temp_c: 'Темп. конвертера',
+  traction_converter_load_pct: 'Нагрузка конвертера',
+  tractive_effort_kn: 'Тяговое усилие',
+  regenerative_braking_power_kw: 'Рекуперация',
+  energy_meter_kwh: 'Счётчик энергии',
+  energy_consumption_kw: 'Потребление энергии',
+  brake_system_pressure_bar: 'Давление тормозов',
+  engine_rpm: 'Обороты двигателя',
+  engine_load_pct: 'Нагрузка двигателя',
+  fuel_level_pct: 'Уровень топлива',
+  fuel_consumption_lph: 'Расход топлива',
 };
 
 export const ROLE_LABELS: Record<string, string> = {
-  driver: 'Driver',
-  dispatcher: 'Dispatcher',
-  engineer: 'Diagnostic Engineer',
-  supervisor: 'Shift Supervisor',
+  driver: 'Машинист',
+  dispatcher: 'Диспетчер',
+  engineer: 'Инженер-диагност',
+  supervisor: 'Руководитель смены',
 };
 
 export const LOCOMOTIVES = [

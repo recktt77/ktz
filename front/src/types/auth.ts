@@ -1,5 +1,3 @@
-import type { UserRole } from './common';
-
 // ──── Auth Service types ────
 
 export interface AuthUser {
@@ -7,7 +5,7 @@ export interface AuthUser {
   email: string;
   full_name: string;
   phone: string | null;
-  roles: UserRole[];
+  roles: string[];
   station_id: string | null;
   is_active: boolean;
   created_at: string;
@@ -28,13 +26,14 @@ export interface RegisterRequest {
   email: string;
   password: string;
   full_name: string;
+  phone?: string;
   invite_code: string;
 }
 
 export interface Invitation {
   id: string;
   email: string;
-  role: UserRole;
+  role: string;
   station_id: string;
   status: 'pending' | 'accepted' | 'expired';
   created_at: string;

@@ -10,7 +10,7 @@ function createError(statusCode, message) {
 }
 
 const AuthService = {
-    async register({ email, password, full_name, invite_code }) {
+    async register({ email, password, full_name, phone, invite_code }) {
         const invitationRepo = AppDataSource.getRepository('Invitation');
         const userRepo = AppDataSource.getRepository('User');
         const userRoleRepo = AppDataSource.getRepository('UserRole');
@@ -45,7 +45,7 @@ const AuthService = {
             email: email.toLowerCase(),
             password_hash,
             full_name,
-            phone: null,
+            phone: phone || null,
             station_id: invitation.station_id || null,
             is_active: true,
         });
@@ -57,8 +57,16 @@ const AuthService = {
 
         await invitationRepo.update(invitation.id, { status: 'accepted' });
 
+        const roles = [invitation.role.name];
+        const tokens = TokenService.generatePair({
+            userId: user.id,
+            email: user.email,
+            roles,
+            stationId: user.station_id,
+        });
+
         const { password_hash: _, ...safeUser } = user;
-        return { ...safeUser, roles: [invitation.role.name] };
+        return { user: { ...safeUser, roles }, ...tokens };
     },
 
     async login({ email, password }) {

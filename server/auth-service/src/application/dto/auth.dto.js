@@ -4,6 +4,7 @@ const RegisterDto = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().min(8).max(128).required(),
     full_name: Joi.string().min(2).max(255).required(),
+    phone: Joi.string().max(50).allow('', null),
     invite_code: Joi.string().required(),
 });
 

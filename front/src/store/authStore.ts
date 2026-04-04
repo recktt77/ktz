@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AuthUser } from '@/types';
+import type { AuthUser, RegisterRequest } from '@/types';
 import { loadStoredTokens, getAccessToken, clearTokens, setOnTokenExpired } from '@/services/api/client';
 import * as authApi from '@/services/api/authService';
 
@@ -10,6 +10,7 @@ interface AuthState {
   error: string | null;
 
   login: (email: string, password: string) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   clearError: () => void;
@@ -36,7 +37,22 @@ export const useAuthStore = create<AuthState>()((set) => {
         const message =
           err && typeof err === 'object' && 'message' in err
             ? String((err as { message: string }).message)
-            : 'Login failed';
+            : 'Ошибка входа';
+        set({ error: message, isLoading: false });
+        throw err;
+      }
+    },
+
+    register: async (data: RegisterRequest) => {
+      set({ isLoading: true, error: null });
+      try {
+        const res = await authApi.register(data);
+        set({ user: res.user, isAuthenticated: true, isLoading: false });
+      } catch (err: unknown) {
+        const message =
+          err && typeof err === 'object' && 'message' in err
+            ? String((err as { message: string }).message)
+            : 'Ошибка регистрации';
         set({ error: message, isLoading: false });
         throw err;
       }
@@ -55,8 +71,7 @@ export const useAuthStore = create<AuthState>()((set) => {
       loadStoredTokens();
       const token = getAccessToken();
       if (!token) {
-        // No stored token — allow access without auth (dev mode)
-        set({ isLoading: false, isAuthenticated: true, user: null });
+        set({ isLoading: false, isAuthenticated: false, user: null });
         return;
       }
       try {
@@ -64,8 +79,7 @@ export const useAuthStore = create<AuthState>()((set) => {
         set({ user, isAuthenticated: true, isLoading: false });
       } catch {
         clearTokens();
-        // Auth service unavailable — allow access without auth
-        set({ user: null, isAuthenticated: true, isLoading: false });
+        set({ user: null, isAuthenticated: false, isLoading: false });
       }
     },
 

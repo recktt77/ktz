@@ -14,9 +14,9 @@ export function RouteContextWidget({ locoId }: Props) {
   if (!route) {
     return (
       <Card>
-        <div className="kpi-card__label">Route</div>
+        <div className="kpi-card__label">Маршрут</div>
         <div className="mt-4 py-4 text-center text-sm" style={{ color: 'var(--text-dim)' }}>
-          No route data
+          Нет данных маршрута
         </div>
       </Card>
     );
@@ -26,7 +26,7 @@ export function RouteContextWidget({ locoId }: Props) {
 
   return (
     <Card>
-      <div className="kpi-card__label mb-3">Route</div>
+      <div className="kpi-card__label mb-3">Маршрут</div>
       <div className="flex items-center justify-between text-sm">
         <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{route.from}</span>
         <span style={{ color: 'var(--text-dim)' }}>→</span>
@@ -41,7 +41,7 @@ export function RouteContextWidget({ locoId }: Props) {
       </div>
       <div className="mt-2 flex justify-between text-xs" style={{ color: 'var(--text-dim)' }}>
         <span>
-          Deviation:{' '}
+          Откл.:{' '}
           <span
             style={{
               color: route.schedule_deviation_min > 3
@@ -50,10 +50,10 @@ export function RouteContextWidget({ locoId }: Props) {
             }}
           >
             {route.schedule_deviation_min > 0 ? '+' : ''}
-            {route.schedule_deviation_min.toFixed(1)} min
+            {route.schedule_deviation_min.toFixed(1)} мин
           </span>
         </span>
-        <span>ETA: {route.eta_to_checkpoint_min.toFixed(0)} min</span>
+        <span>Прибытие: {route.eta_to_checkpoint_min.toFixed(0)} мин</span>
       </div>
     </Card>
   );

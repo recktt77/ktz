@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDashboardStore } from '@/store';
 import { useAuthStore } from '@/store/authStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -11,6 +11,7 @@ import { DispatcherDashboard } from '@/pages/DispatcherDashboard';
 import { EngineerDashboard } from '@/pages/EngineerDashboard';
 import { SupervisorDashboard } from '@/pages/SupervisorDashboard';
 import { LoginPage } from '@/pages/LoginPage';
+import { RegisterPage } from '@/pages/RegisterPage';
 import type { UserRole } from '@/types';
 
 const dashboards: Record<UserRole, React.FC> = {
@@ -21,19 +22,45 @@ const dashboards: Record<UserRole, React.FC> = {
 };
 
 const roleTitles: Record<UserRole, string> = {
-  driver: 'Driver Dashboard',
-  dispatcher: 'Fleet Dispatch',
-  engineer: 'Diagnostic Engineer',
-  supervisor: 'Fleet Operations',
+  driver: 'Панель машиниста',
+  dispatcher: 'Диспетчерская',
+  engineer: 'Инженер-диагност',
+  supervisor: 'Руководитель смены',
 };
+
+function getInviteCodeFromUrl(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('code');
+}
 
 export default function App() {
   const { isAuthenticated, isLoading, user, logout, checkAuth } = useAuthStore();
+  const [showRegister, setShowRegister] = useState(false);
+  const inviteCode = useMemo(() => getInviteCodeFromUrl(), []);
 
   // On mount: check stored token
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // If URL has ?code=xxx, automatically show register page
+  useEffect(() => {
+    if (inviteCode && !isAuthenticated) {
+      setShowRegister(true);
+    }
+  }, [inviteCode, isAuthenticated]);
+
+  // When user logs in, set their first role as active dashboard
+  const setRole = useDashboardStore((s) => s.setRole);
+  useEffect(() => {
+    if (user?.roles?.length) {
+      const dashboardRoles: UserRole[] = ['driver', 'dispatcher', 'engineer', 'supervisor'];
+      const firstRole = user.roles.find((r) => dashboardRoles.includes(r as UserRole));
+      if (firstRole) {
+        setRole(firstRole as UserRole);
+      }
+    }
+  }, [user, setRole]);
 
   if (isLoading) {
     return (
@@ -44,7 +71,20 @@ export default function App() {
   }
 
   if (!isAuthenticated) {
+    if (showRegister && inviteCode) {
+      return (
+        <RegisterPage
+          inviteCode={inviteCode}
+          onBackToLogin={() => setShowRegister(false)}
+        />
+      );
+    }
     return <LoginPage />;
+  }
+
+  // Clear invite code from URL after successful auth
+  if (inviteCode) {
+    window.history.replaceState({}, '', window.location.pathname);
   }
 
   return <AuthenticatedApp user={user} onLogout={logout} />;
