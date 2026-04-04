@@ -10,18 +10,19 @@ import { DriverDashboard } from '@/pages/DriverDashboard';
 import { DispatcherDashboard } from '@/pages/DispatcherDashboard';
 import { EngineerDashboard } from '@/pages/EngineerDashboard';
 import { SupervisorDashboard } from '@/pages/SupervisorDashboard';
+import { AdminDashboard } from '@/pages/AdminDashboard';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import type { UserRole } from '@/types';
 
-const dashboards: Record<UserRole, React.FC> = {
+const dashboards: Record<Exclude<UserRole, 'admin'>, React.FC> = {
   driver: DriverDashboard,
   dispatcher: DispatcherDashboard,
   engineer: EngineerDashboard,
   supervisor: SupervisorDashboard,
 };
 
-const roleTitles: Record<UserRole, string> = {
+const roleTitles: Record<Exclude<UserRole, 'admin'>, string> = {
   driver: 'Панель машиниста',
   dispatcher: 'Диспетчерская',
   engineer: 'Инженер-диагност',
@@ -54,6 +55,11 @@ export default function App() {
   const setRole = useDashboardStore((s) => s.setRole);
   useEffect(() => {
     if (user?.roles?.length) {
+      // Admin gets special treatment — set 'admin' as role
+      if (user.roles.includes('admin')) {
+        setRole('admin');
+        return;
+      }
       const dashboardRoles: UserRole[] = ['driver', 'dispatcher', 'engineer', 'supervisor'];
       const firstRole = user.roles.find((r) => dashboardRoles.includes(r as UserRole));
       if (firstRole) {
@@ -94,7 +100,13 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
   useWebSocket();
 
   const selectedRole = useDashboardStore((s) => s.selectedRole);
-  const Dashboard = dashboards[selectedRole];
+
+  // Admin gets its own full-page layout with sidebar
+  if (selectedRole === 'admin' || user?.roles?.includes('admin')) {
+    return <AdminDashboard />;
+  }
+
+  const Dashboard = dashboards[selectedRole as Exclude<UserRole, 'admin'>] ?? DriverDashboard;
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
@@ -106,7 +118,7 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
               <img src="/header-logo.svg" alt="KTZ" className="h-7 w-auto opacity-90" />
               <div>
                 <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                  {roleTitles[selectedRole]}
+                  {roleTitles[selectedRole as Exclude<UserRole, 'admin'>] ?? 'Dashboard'}
                 </h1>
                 <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
                   Digital Twin

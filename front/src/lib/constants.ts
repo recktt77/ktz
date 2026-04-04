@@ -107,6 +107,7 @@ export const ROLE_LABELS: Record<string, string> = {
   dispatcher: 'Диспетчер',
   engineer: 'Инженер-диагност',
   supervisor: 'Руководитель смены',
+  admin: 'Администратор',
 };
 
 export const LOCOMOTIVES = [

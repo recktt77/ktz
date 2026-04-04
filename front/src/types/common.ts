@@ -2,7 +2,7 @@
 
 export type LocomotiveModel = 'KZ8A' | 'TE33A';
 
-export type UserRole = 'driver' | 'dispatcher' | 'engineer' | 'supervisor';
+export type UserRole = 'driver' | 'dispatcher' | 'engineer' | 'supervisor' | 'admin';
 
 export type MetricStatus = 'normal' | 'warning' | 'critical';
 
