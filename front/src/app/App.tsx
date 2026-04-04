@@ -44,12 +44,15 @@ export default function App() {
     checkAuth();
   }, [checkAuth]);
 
-  // If URL has ?code=xxx, automatically show register page
+  // If URL has ?code=xxx, force show register (log out current user if any)
   useEffect(() => {
-    if (inviteCode && !isAuthenticated) {
+    if (inviteCode) {
+      if (isAuthenticated) {
+        logout();
+      }
       setShowRegister(true);
     }
-  }, [inviteCode, isAuthenticated]);
+  }, [inviteCode, isAuthenticated, logout]);
 
   // When user logs in, set their first role as active dashboard
   const setRole = useDashboardStore((s) => s.setRole);
