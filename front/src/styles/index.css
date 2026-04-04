@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './map.css';
 
 body {
   font-feature-settings: 'tnum';

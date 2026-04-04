@@ -15,3 +15,6 @@ export type { AuthUser, LoginRequest, LoginResponse, RegisterRequest, Invitation
 
 // Map Service types
 export type { Railway, MapStation, TrackSegment, StationTrackCoverage, SpeedLimit, MapOverview, LocomotivePosition } from './map';
+
+// Railway Map UI types
+export type { MapStationNode, MapRouteDefinition, FleetMapItem, MapStatusFilter, MapViewportState } from './railwayMap';
