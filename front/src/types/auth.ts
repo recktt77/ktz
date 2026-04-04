@@ -5,11 +5,11 @@ import type { UserRole } from './common';
 export interface AuthUser {
   id: string;
   email: string;
-  name: string;
-  phone: string;
-  role: UserRole;
-  station_id: string;
-  station_name: string;
+  full_name: string;
+  phone: string | null;
+  roles: UserRole[];
+  station_id: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -25,10 +25,10 @@ export interface LoginResponse {
 }
 
 export interface RegisterRequest {
-  invitation_code: string;
-  name: string;
-  phone: string;
+  email: string;
   password: string;
+  full_name: string;
+  invite_code: string;
 }
 
 export interface Invitation {
@@ -36,7 +36,7 @@ export interface Invitation {
   email: string;
   role: UserRole;
   station_id: string;
-  used: boolean;
+  status: 'pending' | 'accepted' | 'expired';
   created_at: string;
   expires_at: string;
 }

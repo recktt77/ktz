@@ -38,7 +38,7 @@ export async function refreshSession(): Promise<void> {
 // ──── User management ────
 
 export async function getCurrentUser(): Promise<AuthUser> {
-  return api.get<AuthUser>('/users/me');
+  return api.get<AuthUser>('/auth/me');
 }
 
 export async function getUsers(): Promise<AuthUser[]> {
