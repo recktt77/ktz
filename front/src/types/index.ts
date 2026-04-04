@@ -15,4 +15,3 @@ export type { AuthUser, LoginRequest, LoginResponse, RegisterRequest, Invitation
 
 // Map Service types
 export type { Railway, MapStation, TrackSegment, StationTrackCoverage, SpeedLimit, MapOverview, LocomotivePosition } from './map';
-

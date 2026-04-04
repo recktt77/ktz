@@ -1,0 +1,42 @@
+services:
+  # ── Map Service ──────────────────────────────────────────
+  map-db:
+    image: postgres:16-alpine
+    container_name: ktzh_map_db
+    restart: unless-stopped
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: map
+      POSTGRES_PASSWORD: map_secret
+      POSTGRES_DB: map
+    volumes:
+      - map_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U map"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  map-service:
+    build:
+      context: ./server/map
+      dockerfile: Dockerfile
+    container_name: ktzh_map_service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      NODE_ENV: development
+      PORT: 8082
+      DB_HOST: map-db
+      DB_PORT: 5432
+      DB_NAME: map
+      DB_USER: map
+      DB_PASS: map_secret
+    depends_on:
+      map-db:
+        condition: service_healthy
+
+volumes:
+  map_pg_data:

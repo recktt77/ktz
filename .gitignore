@@ -3,3 +3,4 @@ dist
 .DS_Store
 front/.env
 front/tsconfig.tsbuildinfo
+server/map/.env
