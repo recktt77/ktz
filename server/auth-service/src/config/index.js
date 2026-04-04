@@ -25,7 +25,7 @@ const config = {
         pass: process.env.SMTP_PASS || '',
     },
 
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3002',
 
     admin: {
         email: process.env.ADMIN_EMAIL || '',
@@ -33,7 +33,7 @@ const config = {
     },
 
     cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+        origin: process.env.CORS_ORIGIN || 'http://localhost:3002',
     },
 };
 

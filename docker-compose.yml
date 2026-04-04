@@ -103,8 +103,10 @@ services:
       JWT_REFRESH_SECRET: ktzh-refresh-secret-change-in-prod
       JWT_ACCESS_EXPIRES: 15m
       JWT_REFRESH_EXPIRES: 7d
-      FRONTEND_URL: http://localhost:3000
-      CORS_ORIGIN: http://localhost:3000
+      FRONTEND_URL: http://localhost:3002
+      CORS_ORIGIN: http://localhost:3002
+      ADMIN_EMAIL: admin@ktzh.kz
+      ADMIN_PASSWORD: Admin123!
     depends_on:
       auth-db:
         condition: service_healthy
@@ -220,7 +222,7 @@ services:
       NORMALIZATION_URL: http://normalization:8085
       NORMALIZATION_WS_URL: http://normalization:8086
       JWT_ACCESS_SECRET: ktzh-access-secret-change-in-prod
-      CORS_ORIGIN: http://localhost:3000
+      CORS_ORIGIN: http://localhost:3002
     depends_on:
       - auth-service
       - map-service
