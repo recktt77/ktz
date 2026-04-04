@@ -49,6 +49,10 @@ export function routeMessageBatch(messages: ValidatedWSMessage[]): void {
       case 'fleet_summary_update':
         store.updateFleet(msg.payload);
         break;
+
+      case 'locomotive_status_update':
+        // Status text update — no special store action needed yet
+        break;
     }
   }
 

@@ -14,6 +14,13 @@ export class MockStreamManager {
   private telemetryInterval: ReturnType<typeof setInterval> | null = null;
   private processedInterval: ReturnType<typeof setInterval> | null = null;
   private fleetInterval: ReturnType<typeof setInterval> | null = null;
+  private routeInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Route position state for animated map movement
+  private routeState = {
+    'KTZ-4021': { position_km: 142.3, totalKm: 1320, dir: 1 },
+    'KTZ-7015': { position_km: 87.6, totalKm: 230, dir: 1 },
+  };
 
   constructor() {
     this.kz8a = new KZ8AGenerator('KTZ-4021');
@@ -53,7 +60,7 @@ export class MockStreamManager {
                   from: 'Astana',
                   to: 'Almaty',
                   position_km: 142.3,
-                  totalKm: 380,
+                  totalKm: 1320,
                   planned_speed_limit_kmh: 100,
                   schedule_deviation_min: -2.3,
                   route_compliance_score: 92,
@@ -200,12 +207,73 @@ export class MockStreamManager {
 
       this.emit([{ type: 'fleet_summary_update', payload: fleet }]);
     }, 15000);
+
+    // Route position updates every 2s (drives map movement)
+    this.routeInterval = setInterval(() => {
+      // Advance positions — ~0.5% of route per tick for visible demo movement
+      for (const rs of Object.values(this.routeState)) {
+        const step = rs.totalKm * 0.005 * (0.8 + Math.random() * 0.4);
+        rs.position_km += step * rs.dir;
+        if (rs.position_km >= rs.totalKm * 0.97) {
+          rs.position_km = rs.totalKm * 0.97;
+          rs.dir = -1;
+        }
+        if (rs.position_km <= rs.totalKm * 0.03) {
+          rs.position_km = rs.totalKm * 0.03;
+          rs.dir = 1;
+        }
+      }
+
+      this.emit([
+        {
+          type: 'route_context_update',
+          payload: {
+            locomotive_id: 'KTZ-4021',
+            route_id: 'R-AST-ALM-001',
+            segment_id: 'S-047',
+            from: 'Astana',
+            to: 'Almaty',
+            position_km: this.routeState['KTZ-4021'].position_km,
+            totalKm: 1320,
+            planned_speed_limit_kmh: 100,
+            schedule_deviation_min: -2.3 + (Math.random() * 2 - 1),
+            route_compliance_score: 88 + Math.floor(Math.random() * 10),
+            delay_risk_score: 12 + Math.floor(Math.random() * 15),
+            eta_to_checkpoint_min: Math.max(
+              5,
+              Math.floor((1320 - this.routeState['KTZ-4021'].position_km) / 80 * 60),
+            ),
+          },
+        },
+        {
+          type: 'route_context_update',
+          payload: {
+            locomotive_id: 'KTZ-7015',
+            route_id: 'R-KRG-AST-005',
+            segment_id: 'S-012',
+            from: 'Karaganda',
+            to: 'Astana',
+            position_km: this.routeState['KTZ-7015'].position_km,
+            totalKm: 230,
+            planned_speed_limit_kmh: 90,
+            schedule_deviation_min: 1.5 + (Math.random() * 2 - 1),
+            route_compliance_score: 85 + Math.floor(Math.random() * 12),
+            delay_risk_score: 18 + Math.floor(Math.random() * 15),
+            eta_to_checkpoint_min: Math.max(
+              3,
+              Math.floor((230 - this.routeState['KTZ-7015'].position_km) / 70 * 60),
+            ),
+          },
+        },
+      ]);
+    }, 2000);
   }
 
   stop(): void {
     if (this.telemetryInterval) clearInterval(this.telemetryInterval);
     if (this.processedInterval) clearInterval(this.processedInterval);
     if (this.fleetInterval) clearInterval(this.fleetInterval);
+    if (this.routeInterval) clearInterval(this.routeInterval);
   }
 }
 

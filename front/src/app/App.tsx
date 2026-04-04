@@ -35,9 +35,12 @@ export default function App() {
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 px-4 py-3 backdrop-blur-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4">
-            <h1 className="text-base font-bold tracking-tight">
-              🚂 {roleTitles[selectedRole]}
-            </h1>
+            <div className="flex items-center gap-2">
+              <img src="/header-logo.svg" alt="KTZ" className="h-7 w-auto" />
+              <h1 className="text-base font-bold tracking-tight">
+                {roleTitles[selectedRole]}
+              </h1>
+            </div>
             <LocomotiveSwitcher />
           </div>
           <div className="flex items-center gap-3">

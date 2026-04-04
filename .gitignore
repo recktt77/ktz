@@ -13,6 +13,9 @@
 # macOS
 **/.DS_Store
 .DS_Store
+front/.env
+front/tsconfig.tsbuildinfo
+server/map/.env
 
 # ts build cache
 **/*.tsbuildinfo

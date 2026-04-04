@@ -2,11 +2,16 @@ import { FleetSummaryBar } from '@/widgets/supervisor/FleetSummaryBar';
 import { FleetTable } from '@/widgets/supervisor/FleetTable';
 import { LocomotiveDecisionCard } from '@/widgets/supervisor/LocomotiveDecisionCard';
 import { AlertsPanel } from '@/widgets/common/AlertsPanel';
+import { RailwayMap } from '@/widgets/map';
 
 export function SupervisorDashboard() {
   return (
     <div className="space-y-4">
       <FleetSummaryBar />
+
+      {/* Fleet map — compact overview for supervisor */}
+      <RailwayMap className="w-full" compact />
+
       <FleetTable />
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 lg:col-span-7">

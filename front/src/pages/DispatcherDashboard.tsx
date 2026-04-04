@@ -3,12 +3,16 @@ import { LocomotiveList } from '@/widgets/dispatcher/LocomotiveList';
 import { DispatcherDetailCard } from '@/widgets/dispatcher/DispatcherDetailCard';
 import { AlertsPanel } from '@/widgets/common/AlertsPanel';
 import { RouteContextWidget } from '@/widgets/common/RouteContextWidget';
+import { RailwayMap } from '@/widgets/map';
 
 export function DispatcherDashboard() {
   const selectedId = useDashboardStore((s) => s.selectedLocomotiveId);
 
   return (
     <div className="space-y-4">
+      {/* Railway map — primary dispatch view */}
+      <RailwayMap className="w-full" />
+
       <div className="grid grid-cols-12 gap-4">
         {/* Left: locomotive list */}
         <div className="col-span-12 lg:col-span-4">
