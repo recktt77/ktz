@@ -248,8 +248,31 @@ services:
     depends_on:
       - gateway
 
+  # ══════════════════════════════════════════════════════════
+  # NGINX REVERSE PROXY
+  # ══════════════════════════════════════════════════════════
+
+  nginx:
+    build:
+      context: ./server/nginx
+      dockerfile: Dockerfile
+    container_name: ktzh_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-ktzh.example.com}
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot_data:/var/www/certbot
+    depends_on:
+      - gateway
+      - frontend
+
 volumes:
   pg_data:
   auth_pg_data:
   map_pg_data:
   rabbitmq_data:
+  certbot_data:
