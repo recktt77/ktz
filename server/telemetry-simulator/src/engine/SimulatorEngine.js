@@ -57,15 +57,52 @@ class SimulatorEngine {
         this._schedule();
     }
 
-    /** Switch to a named scenario */
+    /** Switch to a named scenario (uses persistent overrides) */
     setScenario(name) {
         const sc = getScenario(name);
         if (!sc) return false;
         this.scenario = name;
-        if (sc.kz8a) this.kz8a.applyOverrides(sc.kz8a);
-        if (sc.te33a) this.te33a.applyOverrides(sc.te33a);
+        // Clear previous overrides, then apply scenario targets
+        this.kz8a.clearOverrides();
+        this.te33a.clearOverrides();
+        if (sc.kz8a && Object.keys(sc.kz8a).length) this.kz8a.setOverrides(sc.kz8a);
+        if (sc.te33a && Object.keys(sc.te33a).length) this.te33a.setOverrides(sc.te33a);
         logger.info(`Scenario switched to "${name}"`);
         return true;
+    }
+
+    /* ---------- Admin Override API ---------- */
+
+    /** Set persistent parameter overrides for a locomotive */
+    setOverrides(locomotive, overrides) {
+        if (locomotive === 'kz8a' || locomotive === 'all') {
+            this.kz8a.setOverrides(overrides);
+        }
+        if (locomotive === 'te33a' || locomotive === 'all') {
+            this.te33a.setOverrides(overrides);
+        }
+        this.scenario = 'custom';
+        logger.info(`Overrides applied to ${locomotive}: ${JSON.stringify(overrides)}`);
+    }
+
+    /** Clear overrides and reset to healthy defaults */
+    clearOverrides(locomotive) {
+        if (locomotive === 'kz8a' || locomotive === 'all') {
+            this.kz8a.clearOverrides();
+        }
+        if (locomotive === 'te33a' || locomotive === 'all') {
+            this.te33a.clearOverrides();
+        }
+        this.scenario = 'normal_run';
+        logger.info(`Overrides cleared for ${locomotive}`);
+    }
+
+    /** Get current overrides for both locomotives */
+    getOverrides() {
+        return {
+            kz8a: this.kz8a.getOverrides(),
+            te33a: this.te33a.getOverrides(),
+        };
     }
 
     /** Get current engine status */
@@ -76,6 +113,7 @@ class SimulatorEngine {
             tickCount: this.tickCount,
             intervalMs: this.intervalMs,
             sender: this.sender.getStats(),
+            overrides: this.getOverrides(),
             locomotives: {
                 kz8a: config.simulation.kz8aLocomotiveId,
                 te33a: config.simulation.te33aLocomotiveId,
