@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+body {
+  font-feature-settings: 'tnum';
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 4px;
+}
