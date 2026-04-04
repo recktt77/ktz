@@ -34,6 +34,7 @@ RUN printf 'server {\n\
 
 EXPOSE 3000
 
+RUN apk add --no-cache wget
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD wget -qO- http://localhost:3000/ || exit 1
 
