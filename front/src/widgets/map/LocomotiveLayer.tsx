@@ -14,23 +14,37 @@ function getStatusClass(item: FleetMapItem): string {
   return item.health_status;
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  normal: '#22c55e',
+  warning: '#eab308',
+  critical: '#ef4444',
+  offline: '#6b7280',
+};
+
 function createLocoIcon(item: FleetMapItem, isSelected: boolean): L.DivIcon {
   const status = getStatusClass(item);
   const selectedClass = isSelected ? 'loco-marker--selected' : '';
+  const color = STATUS_COLORS[status] ?? STATUS_COLORS.offline;
 
   return L.divIcon({
     className: '',
     html: `
       <div class="loco-marker loco-marker--${status} ${selectedClass}">
-        <div class="loco-marker__ring">
-          <div class="loco-marker__inner"></div>
+        <div class="loco-marker__icon-wrap">
+          <img
+            src="/BSicon_exTRAIN3.svg"
+            class="loco-marker__train-svg"
+            style="filter: drop-shadow(0 0 4px ${color});"
+            alt=""
+          />
+          <div class="loco-marker__status-dot" style="background:${color};box-shadow:0 0 6px ${color};"></div>
         </div>
         <div class="loco-marker__id">${item.locomotive_id}</div>
         <div class="loco-marker__model">${item.locomotive_model}</div>
       </div>
     `,
-    iconSize: [60, 46],
-    iconAnchor: [30, 23],
+    iconSize: [64, 56],
+    iconAnchor: [32, 28],
   });
 }
 

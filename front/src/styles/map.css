@@ -79,33 +79,52 @@
   transition: transform 0.15s;
 }
 .loco-marker:hover {
-  transform: scale(1.15);
+  transform: scale(1.2);
   z-index: 1000 !important;
 }
-.loco-marker__ring {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+
+/* Train icon wrapper */
+.loco-marker__icon-wrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid currentColor;
-  box-shadow: 0 0 8px currentColor;
-  transition: all 0.3s;
 }
+.loco-marker__train-svg {
+  width: 28px;
+  height: 28px;
+  transition: filter 0.3s;
+}
+.loco-marker__status-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid #111827;
+}
+.loco-marker--critical .loco-marker__status-dot {
+  animation: loco-pulse-dot 1.5s ease-in-out infinite;
+}
+
 .loco-marker--normal { color: #22c55e; }
 .loco-marker--warning { color: #eab308; }
 .loco-marker--critical { color: #ef4444; }
 .loco-marker--offline { color: #6b7280; }
 
-.loco-marker__inner {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: currentColor;
+.loco-marker--selected .loco-marker__icon-wrap {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 3px;
+  border-radius: 6px;
+  box-shadow: 0 0 14px currentColor, 0 0 28px rgba(255, 255, 255, 0.1);
 }
-.loco-marker--critical .loco-marker__ring {
-  animation: loco-pulse 1.5s ease-in-out infinite;
+
+@keyframes loco-pulse-dot {
+  0%, 100% { box-shadow: 0 0 4px currentColor; transform: scale(1); }
+  50% { box-shadow: 0 0 12px currentColor, 0 0 20px currentColor; transform: scale(1.3); }
 }
 .loco-marker__id {
   margin-top: 2px;
@@ -122,15 +141,6 @@
   color: rgba(255, 255, 255, 0.6);
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-}
-.loco-marker--selected .loco-marker__ring {
-  border-width: 3px;
-  box-shadow: 0 0 14px currentColor, 0 0 28px rgba(255, 255, 255, 0.1);
-}
-
-@keyframes loco-pulse {
-  0%, 100% { box-shadow: 0 0 8px currentColor; }
-  50% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
 }
 
 /* ── Leaflet popup dark theme ── */
