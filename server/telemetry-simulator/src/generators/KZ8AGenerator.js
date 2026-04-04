@@ -1,8 +1,25 @@
 /**
  * KZ8A Electric Locomotive telemetry generator.
- * Uses random-walk state machine matching the Joi kz8aRawSchema
- * in the Locomotive Service.
+ *
+ * DEFAULT: all values stay in narrow "healthy" ranges → green dashboard.
+ * OVERRIDES: admin sets persistent targets via API; the walk drifts toward
+ *            those targets using wider (full) ranges, simulating degradation.
+ *
+ * Overridable params:
+ *   speed, catenaryVoltage, catenaryCurrent, transformerTemp,
+ *   transformerLoad, converterTemp, converterLoad, tractiveEffort,
+ *   regenPower, energyConsumption, brakePressure
  */
+
+const VALID_PARAMS = new Set([
+    'speed', 'catenaryVoltage', 'catenaryCurrent',
+    'transformerTemp', 'transformerLoad',
+    'converterTemp', 'converterLoad',
+    'tractiveEffort', 'regenPower',
+    'energyConsumption', 'brakePressure',
+]);
+
+/* ---------- helpers ---------- */
 
 function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
@@ -10,6 +27,12 @@ function clamp(v, min, max) {
 
 function walk(current, step, min, max) {
     return clamp(current + (Math.random() - 0.5) * 2 * step, min, max);
+}
+
+/** Biased walk — 70 % of the random component pushes toward `target`. */
+function walkToward(current, target, step, min, max) {
+    const bias = target > current ? 0.3 : target < current ? 0.7 : 0.5;
+    return clamp(current + (Math.random() - bias) * 2 * step, min, max);
 }
 
 function round(v, decimals = 0) {
@@ -23,26 +46,52 @@ function compStatus(health) {
     return 'fault';
 }
 
+/* ---------- defaults ---------- */
+
+const HEALTHY_DEFAULTS = {
+    speed: 78,
+    catenaryVoltage: 25,
+    catenaryCurrent: 310,
+    transformerTemp: 38,
+    transformerLoad: 42,
+    converterTemp: 38,
+    converterLoad: 35,
+    tractiveEffort: 180,
+    regenPower: 0,
+    energyMeter: 12480,
+    energyConsumption: 1800,
+    brakePressure: 5.2,
+};
+
+/* ---------- generator ---------- */
+
 class KZ8AGenerator {
     constructor(locomotiveId) {
         this.locomotiveId = locomotiveId;
-
-        // Walk state
-        this.speed = 75;
-        this.catenaryVoltage = 25;
-        this.catenaryCurrent = 310;
-        this.transformerTemp = 65;
-        this.transformerLoad = 55;
-        this.converterTemp = 50;
-        this.converterLoad = 48;
-        this.tractiveEffort = 180;
-        this.regenPower = 0;
-        this.energyMeter = 12480;
-        this.energyConsumption = 1850;
-        this.brakePressure = 5.1;
+        this._overrides = {};           // persistent admin targets
+        Object.assign(this, { ...HEALTHY_DEFAULTS });
     }
 
-    /** Apply a named scenario's overrides to the walk parameters */
+    /* ---- override API ---- */
+
+    static get PARAMS() { return [...VALID_PARAMS]; }
+
+    setOverrides(overrides) {
+        for (const [k, v] of Object.entries(overrides)) {
+            if (VALID_PARAMS.has(k) && typeof v === 'number' && Number.isFinite(v)) {
+                this._overrides[k] = v;
+            }
+        }
+    }
+
+    clearOverrides() {
+        this._overrides = {};
+        Object.assign(this, { ...HEALTHY_DEFAULTS });
+    }
+
+    getOverrides() { return { ...this._overrides }; }
+
+    /** Legacy — used by setScenario (one-shot value set). */
     applyOverrides(overrides) {
         if (!overrides) return;
         for (const [key, value] of Object.entries(overrides)) {
@@ -50,21 +99,51 @@ class KZ8AGenerator {
         }
     }
 
+    /* ---- walk helper ---- */
+
+    /**
+     * @param {string} param      state key
+     * @param {number} hStep      healthy step (small)
+     * @param {number} hMin       healthy min
+     * @param {number} hMax       healthy max
+     * @param {number} fStep      full step (larger)
+     * @param {number} fMin       full min
+     * @param {number} fMax       full max
+     */
+    _walk(param, hStep, hMin, hMax, fStep, fMin, fMax) {
+        const target = this._overrides[param];
+        if (target !== undefined) {
+            this[param] = walkToward(this[param], target, fStep, fMin, fMax);
+        } else {
+            this[param] = walk(this[param], hStep, hMin, hMax);
+        }
+    }
+
+    /* ---- tick ---- */
+
     tick() {
-        this.speed = walk(this.speed, 3, 0, 160);
-        this.catenaryVoltage = walk(this.catenaryVoltage, 0.3, 19, 29);
-        this.catenaryCurrent = walk(this.catenaryCurrent, 15, 0, 800);
-        this.transformerTemp = walk(this.transformerTemp, 1.5, 30, 120);
-        this.transformerLoad = walk(this.transformerLoad, 3, 0, 100);
-        this.converterTemp = walk(this.converterTemp, 1, 25, 100);
-        this.converterLoad = walk(this.converterLoad, 2, 0, 100);
-        this.tractiveEffort = walk(this.tractiveEffort, 10, 0, 400);
-        this.regenPower = Math.random() < 0.3
-            ? walk(this.regenPower, 50, 0, 1200)
-            : 0;
-        this.energyConsumption = walk(this.energyConsumption, 100, 500, 4000);
+        //                  param              hStep hMin  hMax   fStep fMin fMax
+        this._walk('speed', 2, 60, 95, 3, 0, 160);
+        this._walk('catenaryVoltage', 0.15, 24, 26, 0.5, 19, 29);
+        this._walk('catenaryCurrent', 8, 250, 400, 15, 0, 800);
+        this._walk('transformerTemp', 0.3, 30, 44, 2, 30, 120);
+        this._walk('transformerLoad', 1.5, 30, 55, 3, 0, 100);
+        this._walk('converterTemp', 0.3, 28, 50, 1.5, 25, 100);
+        this._walk('converterLoad', 1, 25, 48, 2, 0, 100);
+        this._walk('tractiveEffort', 5, 140, 240, 10, 0, 400);
+        this._walk('energyConsumption', 40, 1400, 2200, 100, 500, 4000);
+        this._walk('brakePressure', 0.04, 4.5, 5.8, 0.15, 2, 7);
+
+        // Regen braking
+        if (this._overrides.regenPower !== undefined) {
+            this.regenPower = walkToward(this.regenPower, this._overrides.regenPower, 50, 0, 1200);
+        } else {
+            this.regenPower = Math.random() < 0.15
+                ? walk(this.regenPower, 20, 0, 300)
+                : 0;
+        }
+
         this.energyMeter += this.energyConsumption / 3600;
-        this.brakePressure = walk(this.brakePressure, 0.1, 2, 7);
 
         return {
             locomotive_id: this.locomotiveId,
