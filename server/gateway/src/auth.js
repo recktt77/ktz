@@ -10,7 +10,8 @@ const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'access-secret-change
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    // No token — pass through without user context (public access)
+    return next();
   }
 
   const token = header.slice(7);

@@ -56,3 +56,9 @@ INSERT INTO metric_schemas (model_code, field_name, data_type, unit, min_value, 
   ('TE33A', 'communication_status',        'enum',   NULL,    NULL, NULL, 'Статус связи (общий)'),
   ('TE33A', 'control_system_status',       'enum',   NULL,    NULL, NULL, 'Статус системы управления')
 ON CONFLICT (model_code, field_name) DO NOTHING;
+
+-- ===== Seed two locomotives =====
+INSERT INTO locomotives (id, model_code, name, status, track_segment_id, position_km) VALUES
+  ('KTZ-4021', 'KZ8A',  'КЗ8А-4021 Электровоз', 'active', 'SEG-ASTANA-ALMATY-01', 142.3),
+  ('KTZ-7015', 'TE33A', 'ТЭ33А-7015 Тепловоз',  'active', 'SEG-KARAGANDA-ASTANA-01', 87.6)
+ON CONFLICT (id) DO NOTHING;

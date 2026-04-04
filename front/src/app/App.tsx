@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDashboardStore } from '@/store';
 import { useAuthStore } from '@/store/authStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { USE_MOCK } from '@/lib/constants';
+
 import { ConnectionBadge } from '@/widgets/common/ConnectionBadge';
 import { RoleSwitcher } from '@/widgets/common/RoleSwitcher';
 import { LocomotiveSwitcher } from '@/widgets/common/LocomotiveSwitcher';
@@ -30,18 +30,12 @@ const roleTitles: Record<UserRole, string> = {
 export default function App() {
   const { isAuthenticated, isLoading, user, logout, checkAuth } = useAuthStore();
 
-  // On mount: check stored token (skip in mock mode)
+  // On mount: check stored token
   useEffect(() => {
-    if (USE_MOCK) {
-      // In mock mode, skip real auth — mark as authenticated
-      useAuthStore.setState({ isAuthenticated: true, isLoading: false });
-    } else {
-      checkAuth();
-    }
+    checkAuth();
   }, [checkAuth]);
 
-  // Show login if not authenticated and not in mock mode
-  if (!USE_MOCK && isLoading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg-base)' }}>
         <div className="login-card__spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
@@ -49,7 +43,7 @@ export default function App() {
     );
   }
 
-  if (!USE_MOCK && !isAuthenticated) {
+  if (!isAuthenticated) {
     return <LoginPage />;
   }
 

@@ -1,7 +1,6 @@
 import type { LocomotiveModel } from '@/types';
 
 export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8086';
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 // Backend service base URLs (defaults for dev without API Gateway)
 export const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8081';
@@ -19,7 +18,7 @@ export const HEARTBEAT_TIMEOUT_MS = 5000;
 
 /**
  * Backend WebSocket channel paths (Normalization Service).
- * Used when connecting to real backend instead of mock.
+ * Used when connecting to the backend WebSocket.
  *   /ws/live                        — raw live stream
  *   /ws/driver/{locomotiveId}       — driver role view
  *   /ws/dispatcher                  — dispatcher fleet view

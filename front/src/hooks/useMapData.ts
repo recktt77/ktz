@@ -10,12 +10,12 @@ interface MapData {
   overview: MapOverview | null;
   loading: boolean;
   error: string | null;
-  source: 'api' | 'mock';
+  source: 'api' | 'fallback';
 }
 
 /**
  * Fetches map topology from Map Service REST API.
- * Falls back to hardcoded mock data if the service is unavailable.
+ * Falls back to hardcoded data if the service is unavailable.
  */
 export function useMapData(): MapData {
   const [data, setData] = useState<MapData>({
@@ -24,7 +24,7 @@ export function useMapData(): MapData {
     overview: null,
     loading: true,
     error: null,
-    source: 'mock',
+    source: 'fallback',
   });
 
   useEffect(() => {
@@ -59,18 +59,18 @@ export function useMapData(): MapData {
             overview: result.overview,
             loading: false,
             error: null,
-            source: 'mock',
+            source: 'fallback',
           }));
         }
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : 'Map Service unavailable';
-        console.warn('[useMapData] Falling back to mock data:', message);
+        console.warn('[useMapData] Falling back to local data:', message);
         setData((prev) => ({
           ...prev,
           loading: false,
           error: message,
-          source: 'mock',
+          source: 'fallback',
         }));
       }
     })();

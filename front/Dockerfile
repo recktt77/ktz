@@ -10,7 +10,6 @@ COPY . .
 # Vite env vars (baked into bundle at build time)
 # In Docker with API Gateway, all traffic goes through gateway at port 8080
 ARG VITE_WS_URL=ws://localhost:8080
-ARG VITE_USE_MOCK=false
 ARG VITE_AUTH_API_URL=http://localhost:8080
 ARG VITE_MAP_API_URL=http://localhost:8080
 ARG VITE_LOCOMOTIVE_API_URL=http://localhost:8080

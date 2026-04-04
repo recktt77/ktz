@@ -47,26 +47,26 @@ app.use('/roles', authMiddleware, proxy(config.services.auth, { '^/': '/roles/' 
 app.use('/stations', authMiddleware, proxy(config.services.auth, { '^/': '/stations/' }));
 
 // ─── Map Service (:8082) ─────────────────────────────────
-app.use('/railways', authMiddleware, proxy(config.services.map));
-app.use('/track-segments', authMiddleware, proxy(config.services.map));
-app.use('/speed-limits', authMiddleware, proxy(config.services.map));
-app.use('/km-points', authMiddleware, proxy(config.services.map));
-app.use('/station-coverage', authMiddleware, proxy(config.services.map));
-app.use('/map', authMiddleware, proxy(config.services.map));
+app.use('/railways', authMiddleware, proxy(config.services.map, { '^/': '/railways/' }));
+app.use('/track-segments', authMiddleware, proxy(config.services.map, { '^/': '/track-segments/' }));
+app.use('/speed-limits', authMiddleware, proxy(config.services.map, { '^/': '/speed-limits/' }));
+app.use('/km-points', authMiddleware, proxy(config.services.map, { '^/': '/km-points/' }));
+app.use('/station-coverage', authMiddleware, proxy(config.services.map, { '^/': '/station-coverage/' }));
+app.use('/map', authMiddleware, proxy(config.services.map, { '^/': '/map/' }));
 
 // ─── Locomotive Service (:8083) ──────────────────────────
-app.use('/locomotives', authMiddleware, proxy(config.services.locomotive));
-app.use('/telemetry', proxy(config.services.locomotive)); // no auth — simulator sends here
-app.use('/models', authMiddleware, proxy(config.services.locomotive));
+app.use('/locomotives', authMiddleware, proxy(config.services.locomotive, { '^/': '/locomotives/' }));
+app.use('/telemetry', proxy(config.services.locomotive, { '^/': '/telemetry/' })); // no auth — simulator sends here
+app.use('/models', authMiddleware, proxy(config.services.locomotive, { '^/': '/models/' }));
 
 // ─── Normalization Service (:8085 REST) ──────────────────
-app.use('/health-index', authMiddleware, proxy(config.services.normalization));
-app.use('/snapshots', authMiddleware, proxy(config.services.normalization));
-app.use('/history', authMiddleware, proxy(config.services.normalization));
-app.use('/replay', authMiddleware, proxy(config.services.normalization));
-app.use('/role-view', authMiddleware, proxy(config.services.normalization));
-app.use('/thresholds', authMiddleware, requireRole('admin', 'engineer'), proxy(config.services.normalization));
-app.use('/weights', authMiddleware, requireRole('admin', 'engineer'), proxy(config.services.normalization));
+app.use('/health-index', authMiddleware, proxy(config.services.normalization, { '^/': '/health-index/' }));
+app.use('/snapshots', authMiddleware, proxy(config.services.normalization, { '^/': '/snapshots/' }));
+app.use('/history', authMiddleware, proxy(config.services.normalization, { '^/': '/history/' }));
+app.use('/replay', authMiddleware, proxy(config.services.normalization, { '^/': '/replay/' }));
+app.use('/role-view', authMiddleware, proxy(config.services.normalization, { '^/': '/role-view/' }));
+app.use('/thresholds', authMiddleware, requireRole('admin', 'engineer'), proxy(config.services.normalization, { '^/': '/thresholds/' }));
+app.use('/weights', authMiddleware, requireRole('admin', 'engineer'), proxy(config.services.normalization, { '^/': '/weights/' }));
 
 // ─── WebSocket proxy (:8086) ─────────────────────────────
 const wsProxy = createProxyMiddleware({

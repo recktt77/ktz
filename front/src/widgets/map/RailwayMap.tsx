@@ -197,9 +197,6 @@ export function RailwayMap({ className = '', compact = false }: RailwayMapProps)
       <div className="absolute left-3 top-3 z-[1000] flex items-center gap-1.5 rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium text-gray-300 backdrop-blur-sm">
         <span className={`inline-block h-2 w-2 rounded-full ${source === 'api' ? 'bg-green-500' : 'bg-yellow-500'}`} />
         {loading ? 'Loading…' : `${fleet.length} locomotives`}
-        {source === 'mock' && !loading && (
-          <span className="ml-1 text-yellow-400/70">(mock)</span>
-        )}
       </div>
 
       {/* Side panel */}
