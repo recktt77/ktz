@@ -47,6 +47,78 @@ const PROCESSED_INTERVAL = 8; // Every 8 telemetry messages
 let fleetSummaryCounter = 0;
 const FLEET_SUMMARY_INTERVAL = 15;
 
+// Route context update interval
+const ROUTE_UPDATE_INTERVAL = 3; // Every 3 ticks (~3s)
+const routeCounters = new Map();
+
+/**
+ * In-memory route assignments for simulated locomotives.
+ * In production this would come from a dispatch/scheduling service.
+ */
+const routeAssignments = {
+  'KTZ-4021': {
+    route_id: 'R-AST-ALM-001',
+    segment_id: 'SEG-AST-ALM',
+    from: 'Astana',
+    to: 'Almaty',
+    totalKm: 1320,
+    position_km: 0,
+    dir: 1, // 1 = forward, -1 = reverse
+  },
+  'KTZ-7015': {
+    route_id: 'R-KRG-AST-005',
+    segment_id: 'SEG-AST-KRG',
+    from: 'Karaganda',
+    to: 'Astana',
+    totalKm: 230,
+    position_km: 0,
+    dir: 1,
+  },
+};
+
+/**
+ * Advance route position based on current speed.
+ * Returns updated route_context_update payload or null if no assignment.
+ */
+function advanceRoutePosition(locoId, speedKmh, intervalSec) {
+  const ra = routeAssignments[locoId];
+  if (!ra) return null;
+
+  // distance = speed * time (convert 1s interval to hours)
+  const distanceKm = (speedKmh || 0) * (intervalSec / 3600);
+  ra.position_km += distanceKm * ra.dir;
+
+  // Bounce at endpoints
+  if (ra.position_km >= ra.totalKm * 0.97) {
+    ra.position_km = ra.totalKm * 0.97;
+    ra.dir = -1;
+  }
+  if (ra.position_km <= ra.totalKm * 0.03) {
+    ra.position_km = ra.totalKm * 0.03;
+    ra.dir = 1;
+  }
+
+  const remainKm = ra.dir === 1
+    ? ra.totalKm - ra.position_km
+    : ra.position_km;
+  const avgSpeed = Math.max(speedKmh || 60, 30);
+
+  return {
+    locomotive_id: locoId,
+    route_id: ra.route_id,
+    segment_id: ra.segment_id,
+    from: ra.from,
+    to: ra.to,
+    position_km: Math.round(ra.position_km * 10) / 10,
+    totalKm: ra.totalKm,
+    planned_speed_limit_kmh: 100,
+    schedule_deviation_min: Math.round((-2 + Math.random() * 4) * 10) / 10,
+    route_compliance_score: 85 + Math.floor(Math.random() * 12),
+    delay_risk_score: 10 + Math.floor(Math.random() * 15),
+    eta_to_checkpoint_min: Math.max(3, Math.round(remainKm / avgSpeed * 60)),
+  };
+}
+
 /**
  * Main processing handler called for each raw telemetry event from RabbitMQ.
  */
@@ -149,6 +221,21 @@ async function processRawTelemetry(event, wsBroadcast) {
       wsBroadcast('fleet_summary_update', fleet);
     }
 
+    // 8. Route context update (every N ticks per locomotive)
+    let routeCount = (routeCounters.get(locoId) || 0) + 1;
+    routeCounters.set(locoId, routeCount);
+
+    const routeCtx = advanceRoutePosition(locoId, normalized.speed_kmh, 1);
+    if (routeCtx && routeCount % ROUTE_UPDATE_INTERVAL === 0) {
+      wsBroadcast('route_context_update', routeCtx);
+
+      // Update in-memory state with route
+      const curState = locomotiveState.get(locoId);
+      if (curState) {
+        curState.route = routeCtx;
+      }
+    }
+
   } catch (err) {
     logger.error('Pipeline processing error', {
       error: err.message,
@@ -212,7 +299,7 @@ function buildSnapshotInit(role, locomotiveIds) {
       telemetry: state.normalized,
       processed: state.processed,
       alerts: state.alerts || [],
-      route: null, // Route comes from map service
+      route: state.route || null,
     });
   }
 
@@ -222,6 +309,51 @@ function buildSnapshotInit(role, locomotiveIds) {
   };
 }
 
+/**
+ * Recover in-memory locomotive state from DB on startup.
+ * Loads the latest normalized + health records per locomotive.
+ */
+async function loadStateFromDb() {
+  try {
+    const locos = await normalizedRepo.findDistinctLocomotives(60);
+    for (const row of locos) {
+      const locoId = row.locomotive_id;
+      const latest = await normalizedRepo.findLatest(locoId);
+      if (!latest) continue;
+
+      const normalized = latest.data || latest;
+      normalized.locomotive_id = normalized.locomotive_id || locoId;
+
+      const processed = calculateHealth(normalized);
+      const fleetEntry = buildSupervisorFleetEntry(normalized, processed);
+      const routeCtx = advanceRoutePosition(locoId, normalized.speed_kmh || 0, 0);
+
+      locomotiveState.set(locoId, {
+        normalized,
+        processed,
+        alerts: [],
+        fleetEntry,
+        route: routeCtx,
+      });
+    }
+    logger.info(`Loaded state for ${locomotiveState.size} locomotives from DB`);
+  } catch (err) {
+    logger.warn('Could not load state from DB (first run?)', { error: err.message });
+  }
+}
+
+/**
+ * Start a timer to broadcast fleet summaries independently of telemetry ticks.
+ */
+function startFleetSummaryTimer(wsBroadcast) {
+  setInterval(() => {
+    if (locomotiveState.size === 0) return;
+    const fleet = buildFleetSummary();
+    wsBroadcast('fleet_summary_update', fleet);
+  }, FLEET_SUMMARY_INTERVAL * 1000);
+  logger.info(`Fleet summary timer started (every ${FLEET_SUMMARY_INTERVAL}s)`);
+}
+
 module.exports = {
   processRawTelemetry,
   getLocomotiveSnapshot,
@@ -229,5 +361,7 @@ module.exports = {
   buildSnapshotInit,
   buildFleetSummary,
   refreshThresholdCache,
+  loadStateFromDb,
+  startFleetSummaryTimer,
   locomotiveState,
 };

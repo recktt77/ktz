@@ -14,6 +14,15 @@ module.exports = new EntitySchema({
       length: 50,
       unique: true,
     },
+    name: {
+      type: "varchar",
+      length: 255,
+      nullable: true,
+    },
+    waypoints: {
+      type: "jsonb",
+      nullable: true,
+    },
     railway_id: {
       type: "uuid",
     },

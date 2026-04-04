@@ -1,67 +1,84 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import '@/styles/map.css';
 
 import { useDashboardStore } from '@/store';
-import { STATIONS, ROUTES, GHOST_FLEET, findRoute, findRouteById } from '@/lib/kazakhstanData';
-import { interpolateOnPolyline, getHealthStatus, getHealthColor } from '@/lib/mapInterpolation';
+import { useMapData } from '@/hooks/useMapData';
+import { interpolateOnPolyline, getHealthStatus } from '@/lib/mapInterpolation';
 import { StationLayer } from './StationLayer';
 import { RouteLayer } from './RouteLayer';
 import { LocomotiveLayer } from './LocomotiveLayer';
 import { MapLegend } from './MapLegend';
 import { LocomotiveMapPanel } from './LocomotiveMapPanel';
-import type { FleetMapItem, MapStatusFilter } from '@/types/railwayMap';
+import type { FleetMapItem, MapStatusFilter, MapStationNode, MapRouteDefinition } from '@/types/railwayMap';
 
 // ── Kazakhstan center & bounds ──
 const KZ_CENTER: [number, number] = [48.5, 67.5];
 const KZ_ZOOM = 5;
 
+// ── Route lookup helpers (work with any station/route arrays) ──
+
+function buildRouteLookups(stations: MapStationNode[], routes: MapRouteDefinition[]) {
+  const stationByName = new Map<string, MapStationNode>();
+  for (const s of stations) {
+    stationByName.set(s.name.toLowerCase(), s);
+    stationByName.set(s.nameKz.toLowerCase(), s);
+  }
+
+  const routeByStationPair = new Map<string, MapRouteDefinition>();
+  const routeById = new Map<string, MapRouteDefinition>();
+
+  for (const r of routes) {
+    routeById.set(r.id, r);
+    const from = stations.find((s) => s.id === r.from_station_id);
+    const to = stations.find((s) => s.id === r.to_station_id);
+    if (from && to) {
+      routeByStationPair.set(`${from.name.toLowerCase()}->${to.name.toLowerCase()}`, r);
+      routeByStationPair.set(`${from.nameKz.toLowerCase()}->${to.nameKz.toLowerCase()}`, r);
+    }
+  }
+
+  return {
+    findRoute(fromName: string, toName: string) {
+      const keyFwd = `${fromName.toLowerCase()}->${toName.toLowerCase()}`;
+      const fwd = routeByStationPair.get(keyFwd);
+      if (fwd) return { route: fwd, reversed: false };
+
+      const keyRev = `${toName.toLowerCase()}->${fromName.toLowerCase()}`;
+      const rev = routeByStationPair.get(keyRev);
+      if (rev) return { route: rev, reversed: true };
+
+      return null;
+    },
+    findRouteById(id: string) {
+      return routeById.get(id);
+    },
+  };
+}
+
 // ══════════════════════════════════════════════════════════════
 //  useMapFleet — merges live store data + ghost fleet
 // ══════════════════════════════════════════════════════════════
 
-function useMapFleet(): FleetMapItem[] {
-  const routes = useDashboardStore((s) => s.routes);
+function useMapFleet(stations: MapStationNode[], routes: MapRouteDefinition[]): FleetMapItem[] {
+  const storeRoutes = useDashboardStore((s) => s.routes);
   const telemetry = useDashboardStore((s) => s.telemetry);
   const processed = useDashboardStore((s) => s.processed);
 
-  // Ghost fleet drifts slowly
-  const [ghostProgress, setGhostProgress] = useState<Record<string, number>>(
-    () => Object.fromEntries(GHOST_FLEET.map((g) => [g.locomotive_id, g.initial_progress])),
-  );
-  const ghostDir = useRef<Record<string, number>>(
-    Object.fromEntries(GHOST_FLEET.map((g) => [g.locomotive_id, 1])),
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGhostProgress((prev) => {
-        const next = { ...prev };
-        for (const g of GHOST_FLEET) {
-          const step = 0.004 * g.speed_factor;
-          let val = next[g.locomotive_id] + step * ghostDir.current[g.locomotive_id];
-          if (val >= 0.98) { val = 0.98; ghostDir.current[g.locomotive_id] = -1; }
-          if (val <= 0.02) { val = 0.02; ghostDir.current[g.locomotive_id] = 1; }
-          next[g.locomotive_id] = val;
-        }
-        return next;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  const lookups = useMemo(() => buildRouteLookups(stations, routes), [stations, routes]);
 
   return useMemo(() => {
     const items: FleetMapItem[] = [];
 
-    // ── Live locomotives from store ──
-    for (const [id, route] of Object.entries(routes)) {
+    // ── Live locomotives from store (real-time WebSocket data) ──
+    for (const [id, route] of Object.entries(storeRoutes)) {
       const tel = telemetry[id];
       const proc = processed[id];
       if (!route) continue;
 
-      const match = findRoute(route.from, route.to);
+      const match = lookups.findRoute(route.from, route.to);
       if (!match) continue;
 
       const wps = match.reversed ? [...match.route.waypoints].reverse() : match.route.waypoints;
@@ -87,46 +104,21 @@ function useMapFleet(): FleetMapItem[] {
       });
     }
 
-    // ── Ghost fleet ──
-    for (const g of GHOST_FLEET) {
-      const route = findRouteById(g.route_id);
-      if (!route) continue;
-
-      const progress = ghostProgress[g.locomotive_id] ?? g.initial_progress;
-      const [lat, lng, heading] = interpolateOnPolyline(route.waypoints, progress);
-
-      items.push({
-        locomotive_id: g.locomotive_id,
-        locomotive_model: g.locomotive_model,
-        route_id: g.route_id,
-        from_station: g.from_station,
-        to_station: g.to_station,
-        latitude: lat,
-        longitude: lng,
-        speed_kmh: 60 + Math.random() * 30,
-        health_index: g.health_index,
-        health_status: getHealthStatus(g.health_index),
-        communication_status: g.communication_status,
-        heading_deg: heading,
-        progress,
-        last_update: Date.now(),
-      });
-    }
-
     return items;
-  }, [routes, telemetry, processed, ghostProgress]);
+  }, [storeRoutes, telemetry, processed, lookups]);
 }
 
 // ══════════════════════════════════════════════════════════════
-//  FitBounds — auto-fit map to Kazakhstan on mount
+//  FitBounds — auto-fit map to station bounds
 // ══════════════════════════════════════════════════════════════
 
-function FitBounds() {
+function FitBounds({ stations }: { stations: MapStationNode[] }) {
   const map = useMap();
   useEffect(() => {
-    const bounds = L.latLngBounds(STATIONS.map((s) => [s.latitude, s.longitude]));
+    if (stations.length === 0) return;
+    const bounds = L.latLngBounds(stations.map((s) => [s.latitude, s.longitude]));
     map.fitBounds(bounds.pad(0.1));
-  }, [map]);
+  }, [map, stations]);
   return null;
 }
 
@@ -140,7 +132,8 @@ interface RailwayMapProps {
 }
 
 export function RailwayMap({ className = '', compact = false }: RailwayMapProps) {
-  const fleet = useMapFleet();
+  const { stations, routes, loading, source } = useMapData();
+  const fleet = useMapFleet(stations, routes);
   const [selectedLocoId, setSelectedLocoId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<MapStatusFilter>('all');
   const [highlightedRoute, setHighlightedRoute] = useState<string | null>(null);
@@ -182,9 +175,9 @@ export function RailwayMap({ className = '', compact = false }: RailwayMapProps)
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
           maxZoom={18}
         />
-        <FitBounds />
-        <RouteLayer routes={ROUTES} highlightedRouteId={highlightedRoute} />
-        <StationLayer stations={STATIONS} compact={compact} />
+        <FitBounds stations={stations} />
+        <RouteLayer routes={routes} highlightedRouteId={highlightedRoute} />
+        <StationLayer stations={stations} compact={compact} />
         <LocomotiveLayer
           fleet={filteredFleet}
           selectedId={selectedLocoId}
@@ -200,10 +193,13 @@ export function RailwayMap({ className = '', compact = false }: RailwayMapProps)
         compact={compact}
       />
 
-      {/* Fleet count badge */}
+      {/* Fleet count / data source badge */}
       <div className="absolute left-3 top-3 z-[1000] flex items-center gap-1.5 rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium text-gray-300 backdrop-blur-sm">
-        <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-        {fleet.length} locomotives
+        <span className={`inline-block h-2 w-2 rounded-full ${source === 'api' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+        {loading ? 'Loading…' : `${fleet.length} locomotives`}
+        {source === 'mock' && !loading && (
+          <span className="ml-1 text-yellow-400/70">(mock)</span>
+        )}
       </div>
 
       {/* Side panel */}

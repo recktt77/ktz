@@ -13,8 +13,11 @@ exports.overview = async (_req, res, next) => {
       relations: ["start_station", "end_station"],
       order: { start_km: "ASC" },
     });
+    const speed_limits = await AppDataSource.getRepository("SpeedLimit").find({
+      order: { km_from: "ASC" },
+    });
 
-    res.json({ railways, stations, segments });
+    res.json({ railways, stations, segments, speed_limits });
   } catch (err) {
     next(err);
   }

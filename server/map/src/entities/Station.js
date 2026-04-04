@@ -18,6 +18,16 @@ module.exports = new EntitySchema({
       length: 50,
       unique: true,
     },
+    name_kz: {
+      type: "varchar",
+      length: 255,
+      nullable: true,
+    },
+    station_type: {
+      type: "varchar",
+      length: 20,
+      nullable: true,
+    },
     railway_id: {
       type: "uuid",
     },
