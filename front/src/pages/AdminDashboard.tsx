@@ -1,24 +1,13 @@
 import { useState } from 'react';
-import { useDashboardStore } from '@/store';
 import { useAuthStore } from '@/store/authStore';
 import { DriverDashboard } from './DriverDashboard';
 import { DispatcherDashboard } from './DispatcherDashboard';
 import { EngineerDashboard } from './EngineerDashboard';
 import { SupervisorDashboard } from './SupervisorDashboard';
-import { AdminOverview } from '@/widgets/admin/AdminOverview';
 
-type AdminTab = 'overview' | 'driver' | 'dispatcher' | 'engineer' | 'supervisor' | 'settings';
+type AdminTab = 'driver' | 'dispatcher' | 'engineer' | 'supervisor' | 'settings';
 
 const navItems: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
-  {
-    id: 'overview',
-    label: 'Обзор',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
-      </svg>
-    ),
-  },
   {
     id: 'driver',
     label: 'Машинист',
@@ -67,7 +56,7 @@ const navItems: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
 ];
 
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [activeTab, setActiveTab] = useState<AdminTab>('driver');
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
@@ -119,7 +108,6 @@ export function AdminDashboard() {
           <span className="admin-topbar__title">АДМИН</span>
         </header>
         <div className="admin-content">
-          {activeTab === 'overview' && <AdminOverview />}
           {activeTab === 'driver' && <DriverDashboard />}
           {activeTab === 'dispatcher' && <DispatcherDashboard />}
           {activeTab === 'engineer' && <EngineerDashboard />}
