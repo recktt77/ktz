@@ -1,4 +1,5 @@
 const { WebSocketServer } = require('ws');
+const url = require('url');
 const subscriptionManager = require('./subscriptionManager');
 const { buildSnapshotInit } = require('../services/pipeline');
 const config = require('../config');
@@ -7,19 +8,77 @@ const logger = require('../utils/logger');
 let wss = null;
 
 /**
+ * Parse role and locomotiveId from WebSocket URL path.
+ * Supported paths:
+ *   /ws/live                   → { role: null, locomotiveIds: [] }   (raw feed, all locos)
+ *   /ws/driver/{locomotiveId}  → { role: 'driver', locomotiveIds: [id] }
+ *   /ws/dispatcher             → { role: 'dispatcher', locomotiveIds: [] }
+ *   /ws/engineer/{locomotiveId}→ { role: 'engineer', locomotiveIds: [id] }
+ *   /ws/supervisor             → { role: 'supervisor', locomotiveIds: [] }
+ *   /ws                        → { role: null, locomotiveIds: [] }  (generic, subscribe via message)
+ */
+function parseWsPath(pathname) {
+  const parts = pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+  // parts: ['ws'] or ['ws', 'live'] or ['ws', 'driver', '{id}'] etc.
+
+  if (parts.length < 2 || parts[0] !== 'ws') {
+    return { role: null, locomotiveIds: [] };
+  }
+
+  const segment = parts[1];
+
+  switch (segment) {
+    case 'live':
+      return { role: null, locomotiveIds: [] };
+
+    case 'driver':
+      return { role: 'driver', locomotiveIds: parts[2] ? [parts[2]] : [] };
+
+    case 'dispatcher':
+      return { role: 'dispatcher', locomotiveIds: [] };
+
+    case 'engineer':
+      return { role: 'engineer', locomotiveIds: parts[2] ? [parts[2]] : [] };
+
+    case 'supervisor':
+      return { role: 'supervisor', locomotiveIds: [] };
+
+    default:
+      return { role: null, locomotiveIds: [] };
+  }
+}
+
+/**
  * Initialize the WebSocket server.
+ * Supports both path-based routing (/ws/driver/{id}, /ws/dispatcher, etc.)
+ * and message-based subscription (connect to /ws, send { type: 'subscribe', ... }).
  */
 function init(server) {
   wss = new WebSocketServer({
     server,
-    path: '/ws',
+    // Accept any path starting with /ws
+    verifyClient: (info) => {
+      const { pathname } = url.parse(info.req.url);
+      return pathname.startsWith('/ws');
+    },
   });
 
   wss.on('connection', (ws, req) => {
     const clientIp = req.socket.remoteAddress;
-    logger.info('WebSocket client connected', { ip: clientIp });
+    const { pathname } = url.parse(req.url);
+    logger.info('WebSocket client connected', { ip: clientIp, path: pathname });
 
     ws.isAlive = true;
+
+    // Auto-subscribe based on URL path
+    const { role, locomotiveIds } = parseWsPath(pathname);
+    if (role) {
+      subscriptionManager.subscribe(ws, role, locomotiveIds);
+      // Send initial snapshot
+      const snapshot = buildSnapshotInit(role, locomotiveIds);
+      sendToClient(ws, { type: 'snapshot_init', payload: snapshot });
+      logger.info('Auto-subscribed via path', { role, locomotiveIds, path: pathname });
+    }
 
     ws.on('pong', () => {
       ws.isAlive = true;
@@ -62,11 +121,12 @@ function init(server) {
     clearInterval(heartbeat);
   });
 
-  logger.info('WebSocket server initialized at /ws');
+  logger.info('WebSocket server initialized (paths: /ws, /ws/live, /ws/driver/{id}, /ws/dispatcher, /ws/engineer/{id}, /ws/supervisor)');
 }
 
 /**
  * Handle messages from WebSocket clients.
+ * Supports message-based subscribe (for clients connecting to generic /ws).
  */
 function handleClientMessage(ws, msg) {
   if (!msg || !msg.type) return;
