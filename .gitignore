@@ -3,3 +3,8 @@ dist
 .DS_Store
 front/.env
 front/tsconfig.tsbuildinfo
+
+# Server env files
+server/**/.env
+*.env
+!*.env.example
