@@ -1,12 +1,11 @@
 import { useDashboardStore } from '@/store';
 import { format } from 'date-fns';
-import clsx from 'clsx';
 
 const cfg = {
-  connected: { color: 'bg-emerald-500', text: 'Connected' },
-  connecting: { color: 'bg-blue-500 animate-pulse', text: 'Connecting…' },
-  reconnecting: { color: 'bg-amber-500 animate-pulse', text: 'Reconnecting…' },
-  disconnected: { color: 'bg-red-500', text: 'Disconnected' },
+  connected: { color: 'var(--status-normal)', shadow: '0 0 6px rgba(52,211,153,0.4)', text: 'Connected' },
+  connecting: { color: 'var(--accent-blue)', shadow: '0 0 6px rgba(59,130,246,0.4)', text: 'Connecting…' },
+  reconnecting: { color: 'var(--status-warning)', shadow: '0 0 6px rgba(245,185,70,0.4)', text: 'Reconnecting…' },
+  disconnected: { color: 'var(--status-critical)', shadow: '0 0 6px rgba(239,68,68,0.4)', text: 'Disconnected' },
 };
 
 export function ConnectionBadge() {
@@ -17,11 +16,14 @@ export function ConnectionBadge() {
   return (
     <div className="flex items-center gap-3 text-sm">
       <div className="flex items-center gap-1.5">
-        <span className={clsx('h-2 w-2 rounded-full', c.color)} />
-        <span className="text-gray-300">{c.text}</span>
+        <span
+          className="inline-block h-2 w-2 rounded-full"
+          style={{ background: c.color, boxShadow: c.shadow }}
+        />
+        <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{c.text}</span>
       </div>
       {lastMessageAt && (
-        <span className="text-xs text-gray-500">
+        <span style={{ color: 'var(--text-dim)', fontSize: '0.68rem' }}>
           {format(new Date(lastMessageAt), 'HH:mm:ss')}
         </span>
       )}

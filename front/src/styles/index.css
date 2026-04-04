@@ -2,8 +2,78 @@
 @import './map.css';
 @import './login.css';
 
+/* ============================================
+   DESIGN SYSTEM — Premium Dark Industrial
+   ============================================ */
+
+:root {
+  /* Background layers (dark-on-dark depth) */
+  --bg-base: #0a0e17;
+  --bg-surface: #111827;
+  --bg-elevated: #1a2233;
+  --bg-card: #151c2c;
+  --bg-card-hover: #1c2640;
+  --bg-inset: #0d1220;
+
+  /* Border */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Text */
+  --text-primary: #f0f2f5;
+  --text-secondary: #8b95a8;
+  --text-muted: #5a6478;
+  --text-dim: #3d4759;
+
+  /* Accent colors (restrained, premium) */
+  --accent-cyan: #22d3ee;
+  --accent-blue: #3b82f6;
+  --accent-coral: #f47e6c;
+  --accent-pink: #e879a8;
+  --accent-amber: #f5b946;
+  --accent-sand: #c4a96a;
+
+  /* Status colors */
+  --status-normal: #34d399;
+  --status-warning: #f5b946;
+  --status-critical: #ef4444;
+  --status-offline: #5a6478;
+
+  /* Glow effects */
+  --glow-cyan: 0 0 20px rgba(34, 211, 238, 0.15);
+  --glow-blue: 0 0 20px rgba(59, 130, 246, 0.15);
+  --glow-coral: 0 0 20px rgba(244, 126, 108, 0.15);
+  --glow-amber: 0 0 20px rgba(245, 185, 70, 0.15);
+  --glow-normal: 0 0 16px rgba(52, 211, 153, 0.12);
+  --glow-warning: 0 0 16px rgba(245, 185, 70, 0.12);
+  --glow-critical: 0 0 16px rgba(239, 68, 68, 0.2);
+
+  /* Card shadow layers */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+}
+
+/* Base */
 body {
   font-feature-settings: 'tnum';
+  background: var(--bg-base);
+  color: var(--text-primary);
 }
 
 /* Scrollbar */
@@ -14,6 +84,419 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ============================================
+   PANEL — premium elevated card
+   ============================================ */
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.panel:hover {
+  border-color: var(--border-default);
+}
+.panel--elevated {
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-elevated);
+}
+.panel--glow-cyan { box-shadow: var(--shadow-card), var(--glow-cyan); }
+.panel--glow-normal { box-shadow: var(--shadow-card), var(--glow-normal); }
+.panel--glow-warning { box-shadow: var(--shadow-card), var(--glow-warning); }
+.panel--glow-critical { box-shadow: var(--shadow-card), var(--glow-critical); }
+
+/* ============================================
+   KPI CARD — top metric tiles
+   ============================================ */
+.kpi-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.kpi-card--cyan::before { background: var(--accent-cyan); }
+.kpi-card--blue::before { background: var(--accent-blue); }
+.kpi-card--coral::before { background: var(--accent-coral); }
+.kpi-card--amber::before { background: var(--accent-amber); }
+.kpi-card--normal::before { background: var(--status-normal); }
+.kpi-card--warning::before { background: var(--status-warning); }
+.kpi-card--critical::before { background: var(--status-critical); }
+.kpi-card--coral::before { background: var(--accent-coral); }
+.kpi-card--pink::before { background: var(--accent-pink); }
+
+.kpi-card__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.kpi-card__value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-card__unit {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* ============================================
+   ALERT RAIL — left vertical panel
+   ============================================ */
+.alert-rail {
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+.alert-rail__title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.alert-rail__count {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.alert-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+.alert-item:hover { background: rgba(255, 255, 255, 0.03); }
+.alert-item--critical {
+  border-left-color: var(--status-critical);
+  background: rgba(239, 68, 68, 0.04);
+}
+.alert-item--warning {
+  border-left-color: var(--status-warning);
+  background: rgba(245, 185, 70, 0.04);
+}
+.alert-item--info {
+  border-left-color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.04);
+}
+.alert-item__title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.alert-item__meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* ============================================
+   STATUS BADGE — refined pill
+   ============================================ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.status-badge--ok {
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--status-normal);
+}
+.status-badge--degraded {
+  background: rgba(245, 185, 70, 0.12);
+  color: var(--status-warning);
+}
+.status-badge--fault {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--status-critical);
+}
+.status-badge--offline {
+  background: rgba(90, 100, 120, 0.15);
+  color: var(--status-offline);
+}
+
+/* ============================================
+   PROGRESS BAR — glowing soft bar
+   ============================================ */
+.progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  position: relative;
+}
+.progress-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s ease-out;
+  position: relative;
+}
+.progress-bar__fill--cyan {
+  background: linear-gradient(90deg, var(--accent-cyan), #06b6d4);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
+}
+.progress-bar__fill--coral {
+  background: linear-gradient(90deg, var(--accent-coral), #ef4444);
+  box-shadow: 0 0 8px rgba(244, 126, 108, 0.3);
+}
+.progress-bar__fill--normal {
+  background: linear-gradient(90deg, var(--status-normal), #10b981);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
+}
+.progress-bar__fill--warning {
+  background: linear-gradient(90deg, var(--status-warning), #f59e0b);
+  box-shadow: 0 0 8px rgba(245, 185, 70, 0.3);
+}
+.progress-bar__fill--critical {
+  background: linear-gradient(90deg, var(--status-critical), #dc2626);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+/* ============================================
+   CHART CONTAINER — premium soft glow
+   ============================================ */
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+}
+.chart-card__header {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+}
+
+/* ============================================
+   HEADER — premium sticky header
+   ============================================ */
+.app-header {
+  background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(17, 24, 39, 0.95) 100%);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ============================================
+   ROLE SWITCHER & LOCO SWITCHER
+   ============================================ */
+.switcher-pill {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
+.switcher-pill__btn {
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.switcher-pill__btn:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+}
+.switcher-pill__btn--active {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   TABLE — industrial data table
+   ============================================ */
+.data-table {
+  width: 100%;
+  font-size: 0.82rem;
+}
+.data-table thead th {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+  text-align: left;
+}
+.data-table tbody tr {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+.data-table tbody tr.selected {
+  background: rgba(34, 211, 238, 0.04);
+}
+.data-table td {
+  padding: 12px 16px;
+}
+
+/* ============================================
+   HEALTH GAUGE — radial indicator
+   ============================================ */
+.health-gauge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-xl);
+}
+.health-gauge__ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  position: relative;
+}
+.health-gauge__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.health-gauge__number {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.health-gauge__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ============================================
+   LAYOUT HELPERS
+   ============================================ */
+.dashboard-grid {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+/* Driver layout: alerts left, main center */
+.layout-driver {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--space-lg);
+}
+@media (max-width: 1024px) {
+  .layout-driver {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dispatcher layout */
+.layout-dispatcher {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+/* ============================================
+   SPARKLINE MINI CHART
+   ============================================ */
+.spark-area {
+  opacity: 0.7;
+}
+
+/* ============================================
+   SCORE CARD — compact diagnostic tile
+   ============================================ */
+.score-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  min-width: 0;
+}
+.score-card__label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.score-card__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
 }

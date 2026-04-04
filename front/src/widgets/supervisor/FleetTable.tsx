@@ -1,5 +1,4 @@
 import { useDashboardStore } from '@/store';
-import { Card } from '@/components/Card';
 import { StatusDot } from '@/components/StatusDot';
 import { isKZ8AFleet, isTE33AFleet } from '@/types';
 import type { FleetEntry } from '@/types';
@@ -12,29 +11,27 @@ export function FleetTable() {
 
   if (fleet.length === 0) {
     return (
-      <Card>
-        <div className="py-8 text-center text-sm text-gray-600">
-          Waiting for fleet data…
-        </div>
-      </Card>
+      <div className="panel p-8 text-center text-sm" style={{ color: 'var(--text-dim)' }}>
+        Waiting for fleet data…
+      </div>
     );
   }
 
   const sorted = [...fleet].sort((a, b) => a.criticality_rank - b.criticality_rank);
 
   return (
-    <Card className="overflow-hidden p-0">
+    <div className="panel overflow-hidden p-0">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="data-table">
           <thead>
-            <tr className="border-b border-gray-800 text-left text-xs font-medium uppercase tracking-wider text-gray-400">
-              <th className="px-4 py-3">Locomotive</th>
-              <th className="px-4 py-3">Model</th>
-              <th className="px-4 py-3">Health</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Risk</th>
-              <th className="px-4 py-3">Maint. Queue</th>
-              <th className="px-4 py-3">Decision</th>
+            <tr>
+              <th>Locomotive</th>
+              <th>Model</th>
+              <th>Health</th>
+              <th>Status</th>
+              <th>Risk</th>
+              <th>Maint. Queue</th>
+              <th>Decision</th>
             </tr>
           </thead>
           <tbody>
@@ -49,7 +46,7 @@ export function FleetTable() {
           </tbody>
         </table>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -67,58 +64,58 @@ function FleetRow({
   return (
     <tr
       onClick={onSelect}
-      className={clsx(
-        'cursor-pointer border-b border-gray-800/50 transition-colors hover:bg-gray-800/50',
-        selected && 'bg-gray-800/70',
-      )}
+      className={clsx(selected && 'selected')}
     >
-      <td className="px-4 py-3 font-medium text-white">{entry.locomotive_id}</td>
-      <td className="px-4 py-3">
-        <span className="rounded bg-gray-800 px-2 py-0.5 text-xs font-medium">
+      <td className="font-medium" style={{ color: 'var(--text-primary)' }}>{entry.locomotive_id}</td>
+      <td>
+        <span
+          className="rounded px-2 py-0.5 text-xs font-medium"
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+        >
           {entry.locomotive_model}
         </span>
       </td>
-      <td className="px-4 py-3">
+      <td>
         <span
-          className={clsx(
-            'font-bold tabular-nums',
-            entry.health_index >= 80
-              ? 'text-emerald-400'
-              : entry.health_index >= 50
-                ? 'text-amber-400'
-                : 'text-red-400',
-          )}
+          className="font-bold tabular-nums"
+          style={{
+            color:
+              entry.health_index >= 80
+                ? 'var(--status-normal)'
+                : entry.health_index >= 50
+                  ? 'var(--status-warning)'
+                  : 'var(--status-critical)',
+          }}
         >
           {entry.health_index}
         </span>
       </td>
-      <td className="px-4 py-3">
-        <ModelStatus entry={entry} />
-      </td>
-      <td className="px-4 py-3">
+      <td><ModelStatus entry={entry} /></td>
+      <td>
         <span
-          className={clsx(
-            'tabular-nums',
-            entry.downtime_risk_score > 50
-              ? 'text-red-400'
-              : entry.downtime_risk_score > 25
-                ? 'text-amber-400'
-                : 'text-gray-400',
-          )}
+          className="tabular-nums"
+          style={{
+            color:
+              entry.downtime_risk_score > 50
+                ? 'var(--status-critical)'
+                : entry.downtime_risk_score > 25
+                  ? 'var(--status-warning)'
+                  : 'var(--text-muted)',
+          }}
         >
           {entry.downtime_risk_score.toFixed(0)}
         </span>
       </td>
-      <td className="px-4 py-3 text-gray-400">#{entry.criticality_rank}</td>
-      <td className="px-4 py-3">
+      <td style={{ color: 'var(--text-muted)' }}>#{entry.criticality_rank}</td>
+      <td>
         <span
           className={clsx(
-            'rounded-full px-2 py-0.5 text-xs font-semibold',
+            'status-badge',
             decision === 'allow'
-              ? 'bg-emerald-500/20 text-emerald-400'
+              ? 'status-badge--ok'
               : decision === 'monitor'
-                ? 'bg-amber-500/20 text-amber-400'
-                : 'bg-red-500/20 text-red-400',
+                ? 'status-badge--degraded'
+                : 'status-badge--fault',
           )}
         >
           {decision}

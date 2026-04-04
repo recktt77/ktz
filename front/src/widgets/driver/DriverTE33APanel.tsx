@@ -58,9 +58,7 @@ export function DriverTE33APanel({ locoId }: Props) {
 
       {/* Component statuses */}
       <Card>
-        <div className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">
-          System Status
-        </div>
+        <div className="kpi-card__label mb-2">System Status</div>
         <div className="flex flex-wrap gap-2">
           <Badge label="Engine" status={t.engine_status} />
           <Badge label="Propulsion" status={t.propulsion_system_status} />
@@ -75,14 +73,14 @@ export function DriverTE33APanel({ locoId }: Props) {
 
       {/* Fault + recommendation */}
       {(t.fault_code || p?.recommended_action) && (
-        <Card className={t.fault_code ? 'border-red-500/30 bg-red-500/5' : ''}>
+        <Card className={t.fault_code ? 'panel--glow-critical' : ''}>
           {t.fault_code && (
-            <div className="mb-2 text-sm font-semibold text-red-400">
+            <div className="mb-2 text-sm font-semibold" style={{ color: 'var(--status-critical)' }}>
               Active Fault: {t.fault_code}
             </div>
           )}
           {p?.recommended_action && (
-            <div className="text-sm text-gray-300">{p.recommended_action}</div>
+            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>{p.recommended_action}</div>
           )}
         </Card>
       )}

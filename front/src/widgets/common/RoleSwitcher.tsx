@@ -14,16 +14,14 @@ export function RoleSwitcher() {
   const setRole = useDashboardStore((s) => s.setRole);
 
   return (
-    <div className="flex gap-1 rounded-lg bg-gray-800 p-1">
+    <div className="switcher-pill">
       {roles.map((r) => (
         <button
           key={r.id}
           onClick={() => setRole(r.id)}
           className={clsx(
-            'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-            selectedRole === r.id
-              ? 'bg-gray-700 text-white'
-              : 'text-gray-400 hover:text-gray-200',
+            'switcher-pill__btn',
+            selectedRole === r.id && 'switcher-pill__btn--active',
           )}
         >
           {r.label}

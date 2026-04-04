@@ -9,32 +9,26 @@ interface BadgeProps {
   className?: string;
 }
 
-const variants: Record<string, string> = {
-  emerald: 'bg-emerald-500/20 text-emerald-400',
-  amber: 'bg-amber-500/20 text-amber-400',
-  red: 'bg-red-500/20 text-red-400',
-  blue: 'bg-blue-500/20 text-blue-400',
-  gray: 'bg-gray-500/20 text-gray-400',
+const variantToClass: Record<string, string> = {
+  emerald: 'status-badge--ok',
+  amber: 'status-badge--degraded',
+  red: 'status-badge--fault',
+  blue: 'status-badge--ok',
+  gray: 'status-badge--offline',
 };
 
-const statusToVariant: Record<ComponentStatus, string> = {
-  ok: 'emerald',
-  degraded: 'amber',
-  fault: 'red',
-  offline: 'gray',
+const statusToClass: Record<ComponentStatus, string> = {
+  ok: 'status-badge--ok',
+  degraded: 'status-badge--degraded',
+  fault: 'status-badge--fault',
+  offline: 'status-badge--offline',
 };
 
 export function Badge({ children, label, status, variant, className }: BadgeProps) {
-  const resolvedVariant = variant ?? (status ? statusToVariant[status] : 'gray');
+  const cls = variant ? variantToClass[variant] : status ? statusToClass[status] : 'status-badge--offline';
 
   return (
-    <span
-      className={clsx(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold',
-        variants[resolvedVariant],
-        className,
-      )}
-    >
+    <span className={clsx('status-badge', cls, className)}>
       {label ?? children}
     </span>
   );

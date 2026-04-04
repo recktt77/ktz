@@ -43,7 +43,7 @@ export default function App() {
   // Show login if not authenticated and not in mock mode
   if (!USE_MOCK && isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950">
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg-base)' }}>
         <div className="login-card__spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
       </div>
     );
@@ -63,16 +63,21 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
   const Dashboard = dashboards[selectedRole];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 px-4 py-3 backdrop-blur-sm">
+      <header className="app-header sticky top-0 z-50 px-5 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <img src="/header-logo.svg" alt="KTZ" className="h-7 w-auto" />
-              <h1 className="text-base font-bold tracking-tight">
-                {roleTitles[selectedRole]}
-              </h1>
+            <div className="flex items-center gap-2.5">
+              <img src="/header-logo.svg" alt="KTZ" className="h-7 w-auto opacity-90" />
+              <div>
+                <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                  {roleTitles[selectedRole]}
+                </h1>
+                <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                  Digital Twin
+                </span>
+              </div>
             </div>
             <LocomotiveSwitcher />
           </div>
@@ -80,11 +85,14 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
             <RoleSwitcher />
             <ConnectionBadge />
             {user && (
-              <div className="flex items-center gap-2 border-l border-gray-700 pl-3">
-                <span className="text-xs text-gray-400">{user.full_name}</span>
+              <div className="flex items-center gap-2 pl-3" style={{ borderLeft: '1px solid var(--border-subtle)' }}>
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{user.full_name}</span>
                 <button
                   onClick={onLogout}
-                  className="rounded px-2 py-1 text-xs text-gray-400 transition hover:bg-gray-800 hover:text-white"
+                  className="rounded-md px-2.5 py-1 text-xs transition-all"
+                  style={{ color: 'var(--text-muted)', background: 'transparent' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                 >
                   Выйти
                 </button>
@@ -95,7 +103,7 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
       </header>
 
       {/* Dashboard content */}
-      <main className="mx-auto max-w-screen-2xl px-4 py-4">
+      <main className="mx-auto max-w-screen-2xl px-5 py-5">
         <Dashboard />
       </main>
     </div>

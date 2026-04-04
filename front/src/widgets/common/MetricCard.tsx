@@ -1,4 +1,3 @@
-import { Card } from '@/components/Card';
 import { StatusDot } from '@/components/StatusDot';
 import { METRIC_LABELS, METRIC_UNITS } from '@/lib/constants';
 import clsx from 'clsx';
@@ -11,32 +10,38 @@ interface Props {
   compact?: boolean;
 }
 
+const statusAccent: Record<string, string> = {
+  fault: 'kpi-card--critical',
+  degraded: 'kpi-card--warning',
+  ok: 'kpi-card--cyan',
+};
+
 export function MetricCard({ metricKey, value, status, compact }: Props) {
   const label = METRIC_LABELS[metricKey] || metricKey.replace(/_/g, ' ');
   const unit = METRIC_UNITS[metricKey] || '';
+  const accent = status ? (statusAccent[status] || 'kpi-card--cyan') : 'kpi-card--cyan';
 
   return (
-    <Card className="min-w-0">
+    <div className={clsx('kpi-card', accent)}>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-gray-400 truncate">
-          {label}
-        </span>
+        <span className="kpi-card__label truncate">{label}</span>
         {status && <StatusDot status={status} />}
       </div>
-      <div
-        className={clsx(
-          'mt-1 font-bold tabular-nums',
-          compact ? 'text-xl' : 'text-2xl',
-          status === 'fault'
-            ? 'text-red-400'
-            : status === 'degraded'
-              ? 'text-amber-400'
-              : 'text-white',
-        )}
-      >
-        {typeof value === 'number' ? value.toFixed(1) : value}
-        <span className="ml-1 text-sm font-normal text-gray-500">{unit}</span>
+      <div className={clsx('kpi-card__value', compact ? 'text-xl!' : '')}>
+        <span
+          style={{
+            color:
+              status === 'fault'
+                ? 'var(--status-critical)'
+                : status === 'degraded'
+                  ? 'var(--status-warning)'
+                  : 'var(--text-primary)',
+          }}
+        >
+          {typeof value === 'number' ? value.toFixed(1) : value}
+        </span>
+        <span className="kpi-card__unit">{unit}</span>
       </div>
-    </Card>
+    </div>
   );
 }
