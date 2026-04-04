@@ -18,6 +18,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 const healthRoutes = require('./routes/health');
 const roleViewRoutes = require('./routes/roleViews');
 const configRoutes = require('./routes/config');
+const reportRoutes = require('./routes/reports');
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.get('/health', (req, res) => {
 app.use('/', healthRoutes);
 app.use('/role-view', roleViewRoutes);
 app.use('/', configRoutes);
+app.use('/reports', reportRoutes);
 
 // ===== Error handler =====
 app.use(errorHandler);
