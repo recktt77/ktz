@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { DriverDashboard } from './DriverDashboard';
 import { DispatcherDashboard } from './DispatcherDashboard';
 import { EngineerDashboard } from './EngineerDashboard';
 import { SupervisorDashboard } from './SupervisorDashboard';
+import * as authApi from '@/services/api/authService';
+import type { Invitation } from '@/types';
 
 type AdminTab = 'driver' | 'dispatcher' | 'engineer' | 'supervisor' | 'settings';
 
@@ -119,14 +121,221 @@ export function AdminDashboard() {
   );
 }
 
+const ROLE_OPTIONS = [
+  { value: 'driver', label: 'Машинист' },
+  { value: 'dispatcher', label: 'Диспетчер' },
+  { value: 'engineer', label: 'Инженер' },
+  { value: 'supervisor', label: 'Руководитель' },
+  { value: 'admin', label: 'Администратор' },
+];
+
 function AdminSettings() {
+  const [email, setEmail] = useState('');
+  const [selectedRole, setSelectedRole] = useState('driver');
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [rolesData, invData] = await Promise.all([
+        authApi.getRoles(),
+        authApi.getInvitations(),
+      ]);
+      setRoles(rolesData);
+      setInvitations(invData);
+    } catch {
+      // silent — non-critical
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  async function handleInvite(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!email.trim()) {
+      setError('Введите email');
+      return;
+    }
+
+    const role = roles.find((r) => r.name === selectedRole);
+    if (!role) {
+      setError('Роль не найдена');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await authApi.createInvitation({
+        email: email.trim(),
+        role_id: role.id,
+      });
+      setSuccess(`Приглашение отправлено на ${email.trim()}. Код: ${result.invite_code ?? '—'}`);
+      setEmail('');
+      loadData();
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'message' in err ? String((err as { message: string }).message) : 'Ошибка при отправке';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const statusLabels: Record<string, { text: string; color: string }> = {
+    pending: { text: 'Ожидает', color: 'var(--accent-amber)' },
+    accepted: { text: 'Принят', color: 'var(--status-normal)' },
+    expired: { text: 'Истёк', color: 'var(--text-muted)' },
+    revoked: { text: 'Отозван', color: 'var(--status-critical)' },
+  };
+
   return (
-    <div className="animate-fade-in space-y-4">
+    <div className="animate-fade-in space-y-5">
+      {/* Invite form */}
       <div className="panel p-6">
-        <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Настройки системы</h2>
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          Настройки будут доступны в следующем обновлении.
-        </p>
+        <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+          Пригласить пользователя
+        </h2>
+
+        {error && (
+          <div
+            className="mb-4 rounded-lg px-4 py-3 text-sm flex items-center gap-2"
+            style={{ background: 'rgba(239,68,68,0.08)', color: 'var(--status-critical)', border: '1px solid rgba(239,68,68,0.15)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M8 4.5v4M8 10.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            {error}
+            <button onClick={() => setError(null)} className="ml-auto opacity-60 hover:opacity-100">×</button>
+          </div>
+        )}
+
+        {success && (
+          <div
+            className="mb-4 rounded-lg px-4 py-3 text-sm flex items-center gap-2"
+            style={{ background: 'rgba(52,211,153,0.08)', color: 'var(--status-normal)', border: '1px solid rgba(52,211,153,0.15)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+            {success}
+            <button onClick={() => setSuccess(null)} className="ml-auto opacity-60 hover:opacity-100">×</button>
+          </div>
+        )}
+
+        <form onSubmit={handleInvite} className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[220px]">
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="user@ktj.kz"
+              className="admin-input"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <div className="w-52">
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Роль
+            </label>
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="admin-input"
+              disabled={loading}
+            >
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="admin-btn"
+            disabled={loading || !email.trim()}
+          >
+            {loading ? (
+              <span className="login-card__spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+                Отправить приглашение
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+
+      {/* Invitations list */}
+      <div className="panel p-6">
+        <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+          Приглашения
+          <span className="ml-2 text-xs font-normal" style={{ color: 'var(--text-muted)' }}>
+            ({invitations.length})
+          </span>
+        </h2>
+
+        {invitations.length === 0 ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Нет отправленных приглашений</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Роль</th>
+                  <th>Статус</th>
+                  <th>Создано</th>
+                  <th>Истекает</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invitations.map((inv) => {
+                  const st = statusLabels[inv.status] ?? { text: inv.status, color: 'var(--text-secondary)' };
+                  const roleName = inv.role?.name
+                    ? (ROLE_OPTIONS.find((r) => r.value === inv.role?.name)?.label ?? inv.role.name)
+                    : '—';
+                  return (
+                    <tr key={inv.id}>
+                      <td className="font-mono text-sm">{inv.email}</td>
+                      <td>{roleName}</td>
+                      <td>
+                        <span
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                          style={{ background: `color-mix(in srgb, ${st.color} 12%, transparent)`, color: st.color }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: st.color }} />
+                          {st.text}
+                        </span>
+                      </td>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {new Date(inv.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {new Date(inv.expires_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

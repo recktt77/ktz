@@ -57,10 +57,14 @@ export async function updateUser(id: string, data: Partial<AuthUser>): Promise<A
 
 export async function createInvitation(data: {
   email: string;
-  role: string;
-  station_id: string;
-}): Promise<Invitation> {
-  return api.post<Invitation>('/auth/invitations', data);
+  role_id: string;
+  station_id?: string | null;
+}): Promise<{ invitation_id: string; invite_code: string }> {
+  return api.post<{ invitation_id: string; invite_code: string }>('/auth/invitations', data);
+}
+
+export async function getInvitations(): Promise<Invitation[]> {
+  return api.get<Invitation[]>('/auth/invitations');
 }
 
 // ──── Reference data ────

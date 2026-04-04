@@ -33,11 +33,13 @@ export interface RegisterRequest {
 export interface Invitation {
   id: string;
   email: string;
-  role: string;
-  station_id: string;
-  status: 'pending' | 'accepted' | 'expired';
+  role: { id: string; name: string } | null;
+  station_id: string | null;
+  invite_code?: string;
+  status: 'pending' | 'accepted' | 'expired' | 'revoked';
   created_at: string;
   expires_at: string;
+  createdBy?: { id: string; full_name: string; email: string } | null;
 }
 
 export interface Station {
