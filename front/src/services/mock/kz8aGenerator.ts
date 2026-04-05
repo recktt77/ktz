@@ -24,14 +24,14 @@ export class KZ8AGenerator {
   id: string;
 
   private speed = 75;
-  private catenaryVoltage = 25;
+  private catenaryVoltage = 24.5;
   private catenaryCurrent = 310;
-  private transformerTemp = 65;
+  private transformerTemp = 72;
   private transformerLoad = 55;
-  private converterTemp = 50;
+  private converterTemp = 55;
   private converterLoad = 48;
   private tractiveEffort = 180;
-  private regenPower = 0;
+  private regenPower = 120;
   private energyMeter = 12480;
   private energyConsumption = 1850;
   private brakePressure = 5.1;
@@ -42,15 +42,15 @@ export class KZ8AGenerator {
 
   tickTelemetry(): KZ8ATelemetry {
     this.speed = walk(this.speed, 3, 0, 160);
-    this.catenaryVoltage = walk(this.catenaryVoltage, 0.3, 19, 29);
-    this.catenaryCurrent = walk(this.catenaryCurrent, 15, 0, 800);
-    this.transformerTemp = walk(this.transformerTemp, 1.5, 30, 120);
-    this.transformerLoad = walk(this.transformerLoad, 3, 0, 100);
-    this.converterTemp = walk(this.converterTemp, 1, 25, 100);
-    this.converterLoad = walk(this.converterLoad, 2, 0, 100);
-    this.tractiveEffort = walk(this.tractiveEffort, 10, 0, 400);
+    this.catenaryVoltage = walk(this.catenaryVoltage, 0.3, 22, 27);
+    this.catenaryCurrent = walk(this.catenaryCurrent, 15, 100, 800);
+    this.transformerTemp = walk(this.transformerTemp, 1.5, 55, 120);
+    this.transformerLoad = walk(this.transformerLoad, 3, 20, 100);
+    this.converterTemp = walk(this.converterTemp, 1, 42, 100);
+    this.converterLoad = walk(this.converterLoad, 2, 15, 100);
+    this.tractiveEffort = walk(this.tractiveEffort, 10, 30, 400);
     this.regenPower =
-      Math.random() < 0.3 ? walk(this.regenPower, 50, 0, 1200) : 0;
+      Math.random() < 0.6 ? walk(this.regenPower, 40, 50, 600) : walk(this.regenPower, 20, 0, 50);
     this.energyConsumption = walk(this.energyConsumption, 100, 500, 4000);
     this.energyMeter += this.energyConsumption / 3600;
     this.brakePressure = walk(this.brakePressure, 0.1, 2, 7);
@@ -91,12 +91,26 @@ export class KZ8AGenerator {
     const brakeRisk = clamp((4 - this.brakePressure) * 30, 0, 100);
     const elecRisk = clamp((25 - this.catenaryVoltage) * 10, 0, 100);
 
-    let hi = 100;
-    hi -= transformerRisk * 0.3;
-    hi -= converterRisk * 0.2;
-    hi -= brakeRisk * 0.15;
-    hi -= elecRisk * 0.2;
-    hi = clamp(Math.round(hi), 0, 100);
+    // Sub-scores computed from real telemetry
+    const transformerHealthScore = round(100 - transformerRisk);
+    const tractionDriveHealthScore = round(clamp(100 - converterRisk * 0.8, 0, 100));
+    const regenEfficiencyScore = round(
+      this.regenPower > 0
+        ? clamp(this.regenPower / 400 * 100, 10, 100)
+        : clamp(20 - brakeRisk * 0.3, 0, 30),
+    );
+    const energyEfficiencyScore = round(
+      clamp(100 - elecRisk * 0.5 - transformerRisk * 0.3 - converterRisk * 0.2, 0, 100),
+    );
+
+    // Health index = weighted average of sub-scores
+    const hi = clamp(Math.round(
+      transformerHealthScore * 0.30 +
+      tractionDriveHealthScore * 0.25 +
+      regenEfficiencyScore * 0.15 +
+      energyEfficiencyScore * 0.15 +
+      (100 - brakeRisk) * 0.15,
+    ), 0, 100);
 
     const label =
       hi >= 80 ? 'Good' : hi >= 50 ? 'Warning' : 'Critical';
@@ -142,13 +156,13 @@ export class KZ8AGenerator {
       health_index: hi,
       health_status: label as KZ8AProcessed['health_status'],
       electrical_supply_risk: round(elecRisk),
-      transformer_health_score: round(100 - transformerRisk),
+      transformer_health_score: transformerHealthScore,
       transformer_thermal_risk: round(transformerRisk),
-      traction_drive_health_score: 90,
+      traction_drive_health_score: tractionDriveHealthScore,
       converter_thermal_risk: round(converterRisk),
-      regen_efficiency_score: this.regenPower > 0 ? 75 : 0,
+      regen_efficiency_score: regenEfficiencyScore,
       brake_risk: round(brakeRisk),
-      energy_efficiency_score: 72,
+      energy_efficiency_score: energyEfficiencyScore,
       fault_severity_score: this.transformerTemp > 100 ? 65 : 0,
       maintenance_priority_score: round(
         clamp(transformerRisk + converterRisk, 0, 100),

@@ -29,9 +29,9 @@ export function HealthCard({ locoId, compact }: Props) {
   const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <div className={clsx('panel p-5 flex flex-col items-center', s.glow)}>
-      <div className="health-gauge">
-        <svg width={size} height={size} className="health-gauge__ring" style={{ transform: 'rotate(-90deg)' }}>
+    <div className={clsx('panel p-5 flex flex-col items-center justify-center', s.glow)} style={{ height: '100%' }}>
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', display: 'block' }}>
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -53,11 +53,11 @@ export function HealthCard({ locoId, compact }: Props) {
             style={{ transition: 'stroke-dashoffset 1s ease-out', filter: `drop-shadow(0 0 6px var(${s.accent}))` }}
           />
         </svg>
-        <div className="health-gauge__value" style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <span className="health-gauge__number" style={{ [s.text.split(':')[0]]: s.text.split(':')[1], fontSize: compact ? '1.8rem' : '2.4rem', fontWeight: 800 }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: `var(${s.accent})`, fontSize: compact ? '1.8rem' : '2.4rem', fontWeight: 800, lineHeight: 1 }}>
             {pct}
           </span>
-          <span className="health-gauge__label">
+          <span style={{ color: `var(${s.accent})`, fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', opacity: 0.7, marginTop: 4 }}>
             {processed.health_status}
           </span>
         </div>
