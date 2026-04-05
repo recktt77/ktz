@@ -19,7 +19,7 @@ export function DriverTE33APanel({ locoId }: Props) {
   const p = processed && isTE33AProcessed(processed) ? (processed as TE33AProcessed) : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-1.5">
       {/* Primary metrics */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard metricKey="speed_kmh" value={t.speed_kmh} />
@@ -40,7 +40,7 @@ export function DriverTE33APanel({ locoId }: Props) {
       </div>
 
       {/* Secondary metrics */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-3">
         <MetricCard
           metricKey="fuel_consumption_lph"
           value={t.fuel_consumption_lph}

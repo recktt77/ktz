@@ -1,5 +1,6 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { getInvitationByCode } from '@/services/api/authService';
 
 interface Props {
   inviteCode: string;
@@ -10,15 +11,52 @@ export function RegisterPage({ inviteCode, onBackToLogin }: Props) {
   const { register, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+7 ');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [inviteLoading, setInviteLoading] = useState(true);
 
   useEffect(() => {
     clearError();
   }, [clearError]);
+
+  function handlePhoneChange(e: ChangeEvent<HTMLInputElement>) {
+    let raw = e.target.value.replace(/\D/g, '');
+    // always start with 7
+    if (!raw.startsWith('7')) raw = '7' + raw.replace(/^[78]/, '');
+    if (raw.length > 11) raw = raw.slice(0, 11);
+
+    let formatted = '+7';
+    if (raw.length > 1) formatted += ' (' + raw.slice(1, 4);
+    if (raw.length >= 4) formatted += ') ';
+    if (raw.length > 4) formatted += raw.slice(4, 7);
+    if (raw.length > 7) formatted += '-' + raw.slice(7, 9);
+    if (raw.length > 9) formatted += '-' + raw.slice(9, 11);
+
+    setPhone(formatted);
+  }
+
+  useEffect(() => {
+    async function fetchInvite() {
+      try {
+        const data = await getInvitationByCode(inviteCode);
+        if (data.status !== 'pending') {
+          setLocalError('Приглашение уже использовано или отозвано');
+        } else if (new Date(data.expires_at) < new Date()) {
+          setLocalError('Срок действия приглашения истёк');
+        } else {
+          setEmail(data.email);
+        }
+      } catch {
+        setLocalError('Приглашение не найдено или недействительно');
+      } finally {
+        setInviteLoading(false);
+      }
+    }
+    fetchInvite();
+  }, [inviteCode]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -28,6 +66,28 @@ export function RegisterPage({ inviteCode, onBackToLogin }: Props) {
       setLocalError('Заполните все обязательные поля');
       return;
     }
+
+    // ФИО: минимум 2 слова, только буквы (кириллица/латиница) и дефисы
+    const nameParts = fullName.trim().split(/\s+/);
+    if (nameParts.length < 2) {
+      setLocalError('Введите полное ФИО (минимум фамилия и имя)');
+      return;
+    }
+    const nameRegex = /^[A-Za-zА-Яа-яӘәІіҢңҒғҮүҰұҚқӨөҺһЁё-]+$/;
+    for (const part of nameParts) {
+      if (!nameRegex.test(part)) {
+        setLocalError('ФИО может содержать только буквы и дефис');
+        return;
+      }
+    }
+
+    // Телефон: если указан — должен быть валидным казахстанским номером
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits.length > 1 && phoneDigits.length !== 11) {
+      setLocalError('Введите полный номер телефона');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setLocalError('Пароли не совпадают');
       return;
@@ -42,7 +102,7 @@ export function RegisterPage({ inviteCode, onBackToLogin }: Props) {
         email: email.trim(),
         password,
         full_name: fullName.trim(),
-        phone: phone.trim() || undefined,
+        phone: phoneDigits.length === 11 ? '+' + phoneDigits : undefined,
         invite_code: inviteCode,
       });
     } catch {
@@ -86,8 +146,15 @@ export function RegisterPage({ inviteCode, onBackToLogin }: Props) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="login-card__form">
-          {/* Email */}
+        {inviteLoading ? (
+          <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-secondary, #94a3b8)' }}>
+            <span className="login-card__spinner" style={{ display: 'inline-block', marginBottom: '0.5rem' }} />
+            <p>Загрузка приглашения...</p>
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSubmit} className="login-card__form" style={{ display: inviteLoading ? 'none' : undefined }}>
+          {/* Email (readonly, from invite) */}
           <div className="login-field">
             <label htmlFor="reg-email" className="login-field__label">
               Email
@@ -101,12 +168,10 @@ export function RegisterPage({ inviteCode, onBackToLogin }: Props) {
                 id="reg-email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="user@ktj.kz"
                 className="login-field__input"
-                autoComplete="email"
-                required
-                disabled={isLoading}
+                readOnly
+                disabled
+                style={{ opacity: 0.7, cursor: 'not-allowed' }}
               />
             </div>
           </div>
@@ -126,7 +191,7 @@ export function RegisterPage({ inviteCode, onBackToLogin }: Props) {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Иванов Иван Иванович"
+                placeholder="Паленшиев Паленши Паленшиулы"
                 className="login-field__input"
                 autoComplete="name"
                 required
@@ -148,7 +213,7 @@ export function RegisterPage({ inviteCode, onBackToLogin }: Props) {
                 id="reg-phone"
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={handlePhoneChange}
                 placeholder="+7 (7XX) XXX-XX-XX"
                 className="login-field__input"
                 autoComplete="tel"
@@ -226,7 +291,7 @@ export function RegisterPage({ inviteCode, onBackToLogin }: Props) {
           <button
             type="submit"
             className="login-card__submit"
-            disabled={isLoading || !email.trim() || !fullName.trim() || !password.trim() || !confirmPassword.trim()}
+            disabled={isLoading || inviteLoading || !email.trim() || !fullName.trim() || !password.trim() || !confirmPassword.trim()}
           >
             {isLoading ? (
               <span className="login-card__spinner" />

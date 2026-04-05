@@ -67,6 +67,10 @@ export async function getInvitations(): Promise<Invitation[]> {
   return api.get<Invitation[]>('/auth/invitations');
 }
 
+export async function getInvitationByCode(code: string): Promise<{ email: string; role: string | null; status: string; expires_at: string }> {
+  return api.get(`/auth/invitations/code/${encodeURIComponent(code)}`);
+}
+
 // ──── Reference data ────
 
 export async function getRoles(): Promise<{ id: string; name: string }[]> {

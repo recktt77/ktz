@@ -33,18 +33,16 @@ export function BarChartWidget({ locoId, tabs, height = 240 }: Props) {
   return (
     <div className="chart-card">
       {/* Header with tabs */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="chart-card__header mb-0">Управление движением</div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5" style={{ background: 'var(--bg-inset)', borderRadius: 'var(--radius-sm)', padding: 2 }}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                activeTab === tab.id
-                  ? 'text-white'
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-              style={activeTab === tab.id ? { background: 'var(--bg-elevated)', color: 'var(--text-primary)' } : {}}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
+              style={activeTab === tab.id
+                ? { background: 'var(--bg-elevated)', color: 'var(--text-primary)' }
+                : { background: 'transparent', color: 'var(--text-muted)' }}
               onClick={() => setActiveTab(tab.id)}
             >
               {tab.label}
@@ -59,7 +57,7 @@ export function BarChartWidget({ locoId, tabs, height = 240 }: Props) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-3">
+      <div className="flex items-center gap-3 mt-2">
         {activeMetrics.map((m) => (
           <div key={m.key} className="flex items-center gap-1.5">
             <span
@@ -114,22 +112,21 @@ function BarGroup({ locoId, metrics, height }: { locoId: string | null; metrics:
     return result;
   }, [metricHistories]);
 
-  const barMaxH = height - 30; // space for labels
-  const barWidth = 18;
-  const barGap = 4;
-  const groupWidth = metrics.length * (barWidth + barGap) - barGap;
+  const barMaxH = height - 30;
+  const barWidth = 14;
 
   return (
     <div className="flex items-end justify-around h-full px-2">
       {buckets.map((bucket, bi) => (
-        <div key={bi} className="flex flex-col items-center gap-1">
-          <div className="flex items-end gap-1" style={{ height: barMaxH }}>
+        <div key={bi} className="flex flex-col items-center gap-1.5">
+          <div className="flex items-end gap-1.5" style={{ height: barMaxH }}>
             {bucket.values.map((v, vi) => (
               <div
                 key={vi}
-                className="rounded-t-lg transition-all duration-700 ease-out"
+                className="transition-all duration-700 ease-out"
                 style={{
                   width: barWidth,
+                  borderRadius: '6px 6px 4px 4px',
                   height: `${Math.max(v.value * 100, 4)}%`,
                   background: `linear-gradient(to top, ${v.color}80, ${v.color})`,
                   boxShadow: `0 0 8px ${v.color}30`,

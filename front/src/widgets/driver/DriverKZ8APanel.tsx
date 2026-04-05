@@ -19,9 +19,9 @@ export function DriverKZ8APanel({ locoId }: Props) {
   const p = processed && isKZ8AProcessed(processed) ? (processed as KZ8AProcessed) : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-1.5">
       {/* Primary metrics */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-4">
         <MetricCard metricKey="speed_kmh" value={t.speed_kmh} />
         <MetricCard
           metricKey="tractive_effort_kn"
@@ -41,7 +41,7 @@ export function DriverKZ8APanel({ locoId }: Props) {
       </div>
 
       {/* Secondary metrics */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-4">
         <MetricCard
           metricKey="catenary_current_a"
           value={t.catenary_current_a}
@@ -64,7 +64,7 @@ export function DriverKZ8APanel({ locoId }: Props) {
       </div>
 
       {/* Tertiary metrics */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-4">
         <MetricCard
           metricKey="traction_converter_temp_c"
           value={t.traction_converter_temp_c}

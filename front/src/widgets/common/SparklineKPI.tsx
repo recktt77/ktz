@@ -19,8 +19,8 @@ export function SparklineKPI({ locoId, label, metricKey, value, unit = '', color
 
   // Take last 30 points for a mini sparkline
   const points = history.slice(-30);
-  const svgW = 120;
-  const svgH = 40;
+  const svgW = 80;
+  const svgH = 28;
 
   let pathD = '';
   let areaD = '';
@@ -44,7 +44,7 @@ export function SparklineKPI({ locoId, label, metricKey, value, unit = '', color
     <div className={`kpi-card ${accent ?? 'kpi-card--cyan'}`}>
       <div className="kpi-card__label">{label}</div>
       <div className="flex items-end justify-between gap-2 mt-1">
-        <div className="kpi-card__value" style={{ fontSize: '1.8rem' }}>
+        <div className="kpi-card__value" style={{ fontSize: '1.2rem' }}>
           {typeof value === 'number' ? Math.round(value) : value}
           {unit && <span className="kpi-card__unit">{unit}</span>}
         </div>

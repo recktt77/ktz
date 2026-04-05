@@ -45,6 +45,23 @@ const InvitationService = {
         });
     },
 
+    async getByCode(code) {
+        const invitationRepo = AppDataSource.getRepository('Invitation');
+        const invitation = await invitationRepo.findOne({
+            where: { invite_code: code },
+            relations: ['role'],
+        });
+        if (!invitation) {
+            throw createError(404, 'Invitation not found');
+        }
+        return {
+            email: invitation.email,
+            role: invitation.role?.name ?? null,
+            status: invitation.status,
+            expires_at: invitation.expires_at,
+        };
+    },
+
     async revoke(id) {
         const invitationRepo = AppDataSource.getRepository('Invitation');
         const invitation = await invitationRepo.findOne({ where: { id } });

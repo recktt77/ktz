@@ -15,11 +15,11 @@ interface Props {
  * Radial / donut chart like the reference (59% Среднее).
  * Shows multiple colored arcs around a center value.
  */
-export function RadialHealthChart({ segments, centerValue, centerLabel = 'Среднее', size = 160 }: Props) {
+export function RadialHealthChart({ segments, centerValue, centerLabel = 'Среднее', size = 180 }: Props) {
   const cx = size / 2;
   const cy = size / 2;
-  const strokeW = 10;
-  const gap = 14; // gap between rings
+  const strokeW = 8;
+  const gap = 12;
   const outerR = (size - strokeW) / 2 - 4;
 
   // Each segment gets its own ring
@@ -33,18 +33,16 @@ export function RadialHealthChart({ segments, centerValue, centerLabel = 'Сре
   }).filter(Boolean) as (Segment & { r: number; circumference: number; offset: number })[];
 
   return (
-    <div className="kpi-card flex flex-col items-center">
+    <div className="kpi-card flex flex-col items-center" style={{ padding: '6px' }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
         {rings.map((ring, i) => (
           <g key={i}>
-            {/* Background ring */}
             <circle
               cx={cx} cy={cy} r={ring.r}
               fill="none"
-              stroke="rgba(255,255,255,0.04)"
+              stroke="rgba(245,185,70,0.04)"
               strokeWidth={strokeW}
             />
-            {/* Filled arc */}
             <circle
               cx={cx} cy={cy} r={ring.r}
               fill="none"
@@ -55,17 +53,16 @@ export function RadialHealthChart({ segments, centerValue, centerLabel = 'Сре
               strokeDashoffset={ring.offset}
               style={{
                 transition: 'stroke-dashoffset 1s ease-out',
-                filter: `drop-shadow(0 0 4px ${ring.color}60)`,
+                filter: `drop-shadow(0 0 6px ${ring.color}50)`,
               }}
             />
           </g>
         ))}
-        {/* Center text (unrotated) */}
         <g style={{ transform: 'rotate(90deg)', transformOrigin: `${cx}px ${cy}px` }}>
-          <text x={cx} y={cy - 6} textAnchor="middle" fill="var(--text-primary)" fontSize="28" fontWeight="800">
+          <text x={cx} y={cy - 4} textAnchor="middle" fill="var(--accent-amber)" fontSize="22" fontWeight="800">
             {centerValue}%
           </text>
-          <text x={cx} y={cy + 14} textAnchor="middle" fill="var(--text-muted)" fontSize="10" fontWeight="600">
+          <text x={cx} y={cy + 10} textAnchor="middle" fill="var(--text-muted)" fontSize="8" fontWeight="600">
             {centerLabel}
           </text>
         </g>

@@ -11,11 +11,11 @@ export function SpeedGauge({ locoId, maxSpeed = 160 }: Props) {
   const pct = Math.min(speed / maxSpeed, 1);
 
   // Arc parameters (semi-circle gauge)
-  const size = 180;
+  const size = 120;
   const cx = size / 2;
-  const cy = size / 2 + 10;
-  const r = 70;
-  const strokeW = 12;
+  const cy = size / 2 + 6;
+  const r = 46;
+  const strokeW = 8;
   const startAngle = Math.PI;
   const endAngle = 0;
   const totalArc = Math.PI;
@@ -50,9 +50,9 @@ export function SpeedGauge({ locoId, maxSpeed = 160 }: Props) {
   // Tick marks
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => {
     const angle = startAngle - t * totalArc;
-    const inner = { x: cx + (r - 18) * Math.cos(angle), y: cy - (r - 18) * Math.sin(angle) };
-    const outer = { x: cx + (r + 4) * Math.cos(angle), y: cy - (r + 4) * Math.sin(angle) };
-    const labelPos = { x: cx + (r - 30) * Math.cos(angle), y: cy - (r - 30) * Math.sin(angle) };
+    const inner = { x: cx + (r - 12) * Math.cos(angle), y: cy - (r - 12) * Math.sin(angle) };
+    const outer = { x: cx + (r + 3) * Math.cos(angle), y: cy - (r + 3) * Math.sin(angle) };
+    const labelPos = { x: cx + (r - 22) * Math.cos(angle), y: cy - (r - 22) * Math.sin(angle) };
     return { inner, outer, labelPos, value: Math.round(maxSpeed * t) };
   });
 
@@ -104,10 +104,10 @@ export function SpeedGauge({ locoId, maxSpeed = 160 }: Props) {
           </g>
         ))}
         {/* Center value */}
-        <text x={cx} y={cy - 8} textAnchor="middle" fill={color} fontSize="32" fontWeight="800" fontFamily="inherit">
+        <text x={cx} y={cy - 4} textAnchor="middle" fill={color} fontSize="22" fontWeight="800" fontFamily="inherit">
           {Math.round(speed)}
         </text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="11" fontWeight="600">
+        <text x={cx} y={cy + 10} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="8" fontWeight="600">
           км/ч
         </text>
       </svg>

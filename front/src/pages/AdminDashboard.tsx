@@ -4,6 +4,8 @@ import { DriverDashboard } from './DriverDashboard';
 import { DispatcherDashboard } from './DispatcherDashboard';
 import { EngineerDashboard } from './EngineerDashboard';
 import { SupervisorDashboard } from './SupervisorDashboard';
+import { LocomotiveSwitcher } from '@/widgets/common/LocomotiveSwitcher';
+import { ConnectionBadge } from '@/widgets/common/ConnectionBadge';
 import * as authApi from '@/services/api/authService';
 import type { Invitation } from '@/types';
 
@@ -107,7 +109,15 @@ export function AdminDashboard() {
       {/* Main content */}
       <main className="admin-main">
         <header className="admin-topbar">
-          <span className="admin-topbar__title">АДМИН</span>
+          <span className="admin-topbar__title">
+            {navItems.find((i) => i.id === activeTab)?.label?.toUpperCase() ?? 'АДМИН'}
+          </span>
+          {activeTab !== 'settings' && (
+            <div className="flex items-center gap-3">
+              <LocomotiveSwitcher />
+              <ConnectionBadge />
+            </div>
+          )}
         </header>
         <div className="admin-content">
           {activeTab === 'driver' && <DriverDashboard />}

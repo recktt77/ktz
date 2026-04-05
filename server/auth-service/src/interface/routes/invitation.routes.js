@@ -29,4 +29,10 @@ router.patch(
     InvitationController.revoke
 );
 
+// Public — fetch invitation info by invite code (for registration page)
+router.get(
+    '/auth/invitations/code/:code',
+    InvitationController.getByCode
+);
+
 module.exports = router;

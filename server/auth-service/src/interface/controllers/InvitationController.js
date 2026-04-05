@@ -27,6 +27,15 @@ const InvitationController = {
             next(err);
         }
     },
+
+    async getByCode(req, res, next) {
+        try {
+            const result = await InvitationService.getByCode(req.params.code);
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    },
 };
 
 module.exports = InvitationController;

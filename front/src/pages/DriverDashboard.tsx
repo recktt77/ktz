@@ -44,7 +44,7 @@ export function DriverDashboard() {
         { id: 'traction', label: 'Тяга', metrics: [
           { key: 'tractive_effort_kn', label: 'Тяговое усилие', color: '#22d3ee' },
           { key: 'catenary_current_a', label: 'Ток сети', color: '#f47e6c' },
-          { key: 'energy_consumption_kw', label: 'Потребление', color: '#f5b946' },
+          { key: 'energy_consumption_kw', label: 'Потребление', color: '#e8943a' },
         ]},
         { id: 'brake', label: 'Тормоза', metrics: [
           { key: 'brake_system_pressure_bar', label: 'Давление', color: '#22d3ee' },
@@ -62,7 +62,7 @@ export function DriverDashboard() {
         ]},
         { id: 'brake', label: 'Тормоза', metrics: [
           { key: 'brake_system_pressure_bar', label: 'Давление', color: '#22d3ee' },
-          { key: 'fuel_consumption_lph', label: 'Расход топлива', color: '#f5b946' },
+          { key: 'fuel_consumption_lph', label: 'Расход топлива', color: '#e8943a' },
         ]},
         { id: 'mode', label: 'Режим движения', metrics: [
           { key: 'speed_kmh', label: 'Скорость', color: '#22d3ee' },
@@ -75,77 +75,75 @@ export function DriverDashboard() {
     ? (() => {
         const p = processed && isKZ8AProcessed(processed) ? processed as KZ8AProcessed : null;
         return [
-          { label: 'Электроснабжение', value: p ? Math.round(100 - p.electrical_supply_risk) : Math.min(100, Math.round((telemetry as KZ8ATelemetry).catenary_voltage_kv / 30 * 100)), color: 'var(--status-critical)' },
-          { label: 'Трансформатор', value: p ? Math.round(p.transformer_health_score) : Math.max(0, 100 - Math.round((telemetry as KZ8ATelemetry).main_transformer_temp_c / 120 * 100)), color: 'var(--accent-cyan)' },
-          { label: 'Тяговый привод', value: p ? Math.round(p.traction_drive_health_score) : ((telemetry as KZ8ATelemetry).traction_drive_status === 'ok' ? 90 : 45), color: 'var(--accent-coral)' },
-          { label: 'Рекуперация', value: p ? Math.round(p.regen_efficiency_score) : Math.min(100, Math.round((telemetry as KZ8ATelemetry).regenerative_braking_power_kw / 500 * 100)), color: 'var(--accent-pink)' },
-          { label: 'Эфф. энергии', value: p ? Math.round(p.energy_efficiency_score) : 70, color: 'var(--accent-amber)' },
+          { label: 'Напряжение сети', value: p ? Math.round(100 - p.electrical_supply_risk) : Math.min(100, Math.round((telemetry as KZ8ATelemetry).catenary_voltage_kv / 30 * 100)), color: '#e8943a' },
+          { label: 'Статус пантографа', value: p ? Math.round(p.transformer_health_score) : Math.max(0, 100 - Math.round((telemetry as KZ8ATelemetry).main_transformer_temp_c / 120 * 100)), color: '#22d3ee' },
+          { label: 'Трансформатор', value: p ? Math.round(p.traction_drive_health_score) : ((telemetry as KZ8ATelemetry).traction_drive_status === 'ok' ? 90 : 45), color: '#e879a8' },
+          { label: 'Рекуперация', value: p ? Math.round(p.regen_efficiency_score) : Math.min(100, Math.round((telemetry as KZ8ATelemetry).regenerative_braking_power_kw / 500 * 100)), color: '#f5b946' },
+          { label: 'Эфф. энергии', value: p ? Math.round(p.energy_efficiency_score) : 70, color: '#34d399' },
         ];
       })()
     : (() => {
         const p = processed && isTE33AProcessed(processed) ? processed as TE33AProcessed : null;
         return [
-          { label: 'Двигатель', value: p ? Math.round(p.engine_health_score) : 100 - ((telemetry as TE33ATelemetry).engine_load_pct ?? 50), color: 'var(--status-critical)' },
-          { label: 'Топливо', value: p ? Math.round(p.fuel_efficiency_score) : ((telemetry as TE33ATelemetry).fuel_level_pct ?? 50), color: 'var(--accent-cyan)' },
-          { label: 'Пропульсия', value: p ? Math.round(p.propulsion_health_score) : ((telemetry as TE33ATelemetry).propulsion_system_status === 'ok' ? 90 : 45), color: 'var(--accent-coral)' },
-          { label: 'Тормозная система', value: p ? Math.round(100 - p.brake_risk) : Math.min(100, Math.round(((telemetry as TE33ATelemetry).brake_system_pressure_bar ?? 5) / 8 * 100)), color: 'var(--accent-pink)' },
-          { label: 'Компрессор', value: p ? Math.round(p.compressor_readiness_score) : 80, color: 'var(--accent-amber)' },
+          { label: 'Напряжение сети', value: p ? Math.round(p.engine_health_score) : 100 - ((telemetry as TE33ATelemetry).engine_load_pct ?? 50), color: '#e8943a' },
+          { label: 'Статус пантографа', value: p ? Math.round(p.fuel_efficiency_score) : ((telemetry as TE33ATelemetry).fuel_level_pct ?? 50), color: '#22d3ee' },
+          { label: 'Трансформатор', value: p ? Math.round(p.propulsion_health_score) : ((telemetry as TE33ATelemetry).propulsion_system_status === 'ok' ? 90 : 45), color: '#e879a8' },
+          { label: 'Рекуперация', value: p ? Math.round(100 - p.brake_risk) : Math.min(100, Math.round(((telemetry as TE33ATelemetry).brake_system_pressure_bar ?? 5) / 8 * 100)), color: '#f5b946' },
         ];
       })();
 
   // Diagnostic bars: all key numeric telemetry per model
   const diagRows = model === 'KZ8A' && isKZ8ATelemetry(telemetry)
     ? [
-        { label: 'Трансформатор (темп.)', value: (telemetry as KZ8ATelemetry).main_transformer_temp_c, maxValue: 120, color: 'var(--accent-amber)', unit: '°C' },
-        { label: 'Нагрузка трансформатора', value: (telemetry as KZ8ATelemetry).main_transformer_load_pct, maxValue: 100, color: 'var(--accent-cyan)', unit: '%' },
-        { label: 'Напряжение контактной сети', value: (telemetry as KZ8ATelemetry).catenary_voltage_kv, maxValue: 30, color: 'var(--accent-blue)', unit: 'кВ' },
-        { label: 'Ток контактной сети', value: (telemetry as KZ8ATelemetry).catenary_current_a, maxValue: 1000, color: 'var(--accent-coral)', unit: 'А' },
-        { label: 'Давление тормозов', value: (telemetry as KZ8ATelemetry).brake_system_pressure_bar, maxValue: 8, color: 'var(--accent-pink)', unit: 'бар' },
-        { label: 'Конвертер (темп.)', value: (telemetry as KZ8ATelemetry).traction_converter_temp_c, maxValue: 100, color: 'var(--accent-sand)', unit: '°C' },
-        { label: 'Нагрузка конвертера', value: (telemetry as KZ8ATelemetry).traction_converter_load_pct, maxValue: 100, color: 'var(--status-warning)', unit: '%' },
-        { label: 'Потребление энергии', value: (telemetry as KZ8ATelemetry).energy_consumption_kw, maxValue: 1000, color: 'var(--status-normal)', unit: 'кВт' },
+        { label: 'Трансформатор (темп.)', value: (telemetry as KZ8ATelemetry).main_transformer_temp_c, maxValue: 120, color: '#e8943a', unit: '°C' },
+        { label: 'Нагрузка трансформатора', value: (telemetry as KZ8ATelemetry).main_transformer_load_pct, maxValue: 100, color: '#22d3ee', unit: '%' },
+        { label: 'Напряжение контактной сети', value: (telemetry as KZ8ATelemetry).catenary_voltage_kv, maxValue: 30, color: '#3b82f6', unit: 'кВ' },
+        { label: 'Ток контактной сети', value: (telemetry as KZ8ATelemetry).catenary_current_a, maxValue: 1000, color: '#f47e6c', unit: 'А' },
+        { label: 'Давление тормозов', value: (telemetry as KZ8ATelemetry).brake_system_pressure_bar, maxValue: 8, color: '#e879a8', unit: 'бар' },
+        { label: 'Конвертер (темп.)', value: (telemetry as KZ8ATelemetry).traction_converter_temp_c, maxValue: 100, color: '#c4a96a', unit: '°C' },
+        { label: 'Нагрузка конвертера', value: (telemetry as KZ8ATelemetry).traction_converter_load_pct, maxValue: 100, color: '#f5b946', unit: '%' },
+        { label: 'Потребление энергии', value: (telemetry as KZ8ATelemetry).energy_consumption_kw, maxValue: 1000, color: '#34d399', unit: 'кВт' },
       ]
     : [
-        { label: 'Нагрузка двигателя', value: (telemetry as TE33ATelemetry).engine_load_pct, maxValue: 100, color: 'var(--accent-amber)', unit: '%' },
-        { label: 'Обороты двигателя', value: (telemetry as TE33ATelemetry).engine_rpm, maxValue: 2200, color: 'var(--accent-cyan)', unit: 'об/мин' },
-        { label: 'Уровень топлива', value: (telemetry as TE33ATelemetry).fuel_level_pct, maxValue: 100, color: 'var(--accent-blue)', unit: '%' },
-        { label: 'Расход топлива', value: (telemetry as TE33ATelemetry).fuel_consumption_lph, maxValue: 300, color: 'var(--accent-coral)', unit: 'л/ч' },
-        { label: 'Давление тормозов', value: (telemetry as TE33ATelemetry).brake_system_pressure_bar, maxValue: 8, color: 'var(--accent-pink)', unit: 'бар' },
+        { label: 'Двигатель (нагрузка)', value: (telemetry as TE33ATelemetry).engine_load_pct, maxValue: 100, color: '#e8943a', unit: '%' },
+        { label: 'Уровень топлива', value: (telemetry as TE33ATelemetry).fuel_level_pct, maxValue: 100, color: '#3b82f6', unit: '%' },
+        { label: 'Расход топлива', value: (telemetry as TE33ATelemetry).fuel_consumption_lph, maxValue: 300, color: '#f47e6c', unit: 'л/ч' },
+        { label: 'Динамический тормоз', value: (telemetry as TE33ATelemetry).brake_system_pressure_bar, maxValue: 8, color: '#f5b946', unit: 'бар' },
       ];
 
   const avgRadial = Math.round(radialSegments.reduce((s, seg) => s + seg.value, 0) / radialSegments.length);
 
   return (
     <div className="layout-driver animate-fade-in">
-      {/* Left sidebar: Profile + Alerts */}
-      <aside className="space-y-3">
-        {/* Profile card */}
-        <div className="panel p-4 flex flex-col items-center text-center">
-          <div className="driver-avatar">
-            {user?.full_name?.[0]?.toUpperCase() ?? 'М'}
+      {/* ── Left sidebar: Profile + Alerts ── */}
+      <aside className="flex flex-col gap-1.5 overflow-hidden">
+        {/* Compact profile */}
+        <div className="panel flex items-center gap-2 px-3 py-2">
+          <div className="driver-avatar flex-shrink-0">
+            <img src="/header-logo.svg" alt="KTЖ" style={{ width: 20, height: 20 }} />
           </div>
-          <div className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            {user?.full_name ?? 'Машинист'}
-          </div>
-          <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Машинист</div>
-          <div
-            className="mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-            style={{ background: 'rgba(34,211,238,0.12)', color: 'var(--accent-cyan)' }}
-          >
-            {locoId} · {model}
+          <div className="min-w-0">
+            <div className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+              {user?.full_name ?? 'Машинист'}
+            </div>
+            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>машинист</div>
           </div>
         </div>
-        <AlertsPanel locomotiveId={locoId} />
+        {/* Alerts */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <AlertsPanel locomotiveId={locoId} />
+        </div>
       </aside>
 
-      {/* Main content */}
-      <div className="space-y-4">
-        {/* Row 1: Speed gauge + sparkline KPIs + Route/Map */}
-        <div className="grid grid-cols-12 gap-3">
-          <div className="col-span-12 lg:col-span-3">
+      {/* ── Main: 3-row grid filling viewport ── */}
+      <div className="grid gap-1.5" style={{ gridTemplateRows: 'auto 1fr auto', overflow: 'hidden' }}>
+
+        {/* ROW 1: Speed | Health | Risk | Route + Map */}
+        <div className="grid grid-cols-12 gap-1.5" style={{ maxHeight: '30vh' }}>
+          <div className="col-span-3">
             <SpeedGauge locoId={locoId} />
           </div>
-          <div className="col-span-6 lg:col-span-2">
+          <div className="col-span-2">
             <SparklineKPI
               locoId={locoId}
               label="Средний health"
@@ -155,46 +153,47 @@ export function DriverDashboard() {
               accent={hiStatus === 'Critical' ? 'kpi-card--critical' : hiStatus === 'Warning' ? 'kpi-card--amber' : 'kpi-card--normal'}
             />
           </div>
-          <div className="col-span-6 lg:col-span-2">
+          <div className="col-span-2">
             <SparklineKPI
               locoId={locoId}
               label="Риск задержки"
               metricKey="brake_system_pressure_bar"
               value={`${Math.max(0, 100 - hi)}%`}
-              color="#f47e6c"
-              accent="kpi-card--coral"
+              color="#e8943a"
+              accent="kpi-card--amber"
             />
           </div>
-          <div className="col-span-12 lg:col-span-5 space-y-2">
+          <div className="col-span-5 grid gap-1.5" style={{ gridTemplateRows: '1fr 1fr' }}>
             <RouteContextWidget locoId={locoId} />
-            <div className="panel overflow-hidden" style={{ height: 180 }}>
-              <RailwayMap compact className="w-full" />
+            <div className="panel overflow-hidden">
+              <RailwayMap compact className="w-full h-full" />
             </div>
           </div>
         </div>
 
-        {/* Row 2: Bar chart + Radial health chart */}
-        <div className="grid grid-cols-12 gap-3">
-          <div className="col-span-12 lg:col-span-7">
-            <BarChartWidget locoId={locoId} tabs={barTabs} height={220} />
+        {/* ROW 2: BarChart | RadialHealth */}
+        <div className="grid grid-cols-12 gap-1.5 min-h-0">
+          <div className="col-span-7 min-h-0">
+            <BarChartWidget locoId={locoId} tabs={barTabs} height={180} />
           </div>
-          <div className="col-span-12 lg:col-span-5">
+          <div className="col-span-5 min-h-0">
             <RadialHealthChart
               segments={radialSegments}
               centerValue={avgRadial}
+              size={130}
             />
           </div>
         </div>
 
-        {/* Row 3: Diagnostic bars + Model-specific status */}
-        <div className="grid grid-cols-12 gap-3">
-          <div className="col-span-12 lg:col-span-5">
+        {/* ROW 3: Diagnostics | Metrics */}
+        <div className="grid grid-cols-12 gap-1.5" style={{ maxHeight: '28vh' }}>
+          <div className="col-span-4 overflow-auto">
             <DiagnosticBars
               title={`Состояние ${model}`}
               rows={diagRows}
             />
           </div>
-          <div className="col-span-12 lg:col-span-7">
+          <div className="col-span-8 overflow-auto">
             {model === 'KZ8A' ? (
               <DriverKZ8APanel locoId={locoId} />
             ) : (

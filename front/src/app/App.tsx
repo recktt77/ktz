@@ -34,6 +34,13 @@ function getInviteCodeFromUrl(): string | null {
   return params.get('code');
 }
 
+/** Remove /register path and query string, leave at / */
+function cleanUrl() {
+  if (window.location.pathname !== '/' || window.location.search) {
+    window.history.replaceState({}, '', '/');
+  }
+}
+
 export default function App() {
   const { isAuthenticated, isLoading, user, logout, checkAuth } = useAuthStore();
   const [showRegister, setShowRegister] = useState(false);
@@ -53,6 +60,13 @@ export default function App() {
       setShowRegister(true);
     }
   }, [inviteCode, isAuthenticated, logout]);
+
+  // If path is /register but no invite code → redirect to /
+  useEffect(() => {
+    if (window.location.pathname === '/register' && !inviteCode) {
+      cleanUrl();
+    }
+  }, [inviteCode]);
 
   // When user logs in, set their first role as active dashboard
   const setRole = useDashboardStore((s) => s.setRole);
@@ -91,10 +105,8 @@ export default function App() {
     return <LoginPage />;
   }
 
-  // Clear invite code from URL after successful auth
-  if (inviteCode) {
-    window.history.replaceState({}, '', window.location.pathname);
-  }
+  // Clear invite code / register path from URL after successful auth
+  cleanUrl();
 
   return <AuthenticatedApp user={user} onLogout={logout} />;
 }
@@ -114,11 +126,11 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       {/* Header */}
-      <header className="app-header sticky top-0 z-50 px-5 py-3">
+      <header className="app-header sticky top-0 z-50 px-3 py-1">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2.5">
-              <img src="/header-logo.svg" alt="KTZ" className="h-7 w-auto opacity-90" />
+              <img src="/header-logo.svg" alt="KTZ" className="h-7 w-auto" />
               <div>
                 <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                   {roleTitles[selectedRole as Exclude<UserRole, 'admin'>] ?? 'Dashboard'}
@@ -134,13 +146,13 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
             <RoleSwitcher />
             <ConnectionBadge />
             {user && (
-              <div className="flex items-center gap-2 pl-3" style={{ borderLeft: '1px solid var(--border-subtle)' }}>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{user.full_name}</span>
+              <div className="flex items-center gap-2 pl-3" style={{ borderLeft: '1px solid var(--border-card)' }}>
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{user.full_name}</span>
                 <button
                   onClick={onLogout}
-                  className="rounded-md px-2.5 py-1 text-xs transition-all"
+                  className="rounded-md px-2.5 py-1 text-xs font-medium transition-all"
                   style={{ color: 'var(--text-muted)', background: 'transparent' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--accent-amber)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                 >
                   Выйти
@@ -152,7 +164,7 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
       </header>
 
       {/* Dashboard content */}
-      <main className="mx-auto max-w-screen-2xl px-5 py-5">
+      <main className="mx-auto max-w-screen-2xl px-3 py-2">
         <Dashboard />
       </main>
     </div>
