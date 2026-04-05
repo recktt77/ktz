@@ -1,31 +1,42 @@
 import type { LocomotiveModel } from '@/types';
 
 /**
+ * Resolve base API URL from browser location.
+ * In production, all API requests go through nginx at /api/ (same origin).
+ * In development, VITE_*_URL env vars point to localhost services.
+ */
+function resolveApiBaseUrl(): string {
+  const env = import.meta.env.VITE_AUTH_API_URL;
+  if (env) return env;
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api`;
+  }
+  return 'http://localhost:8080';
+}
+
+/**
  * Resolve WebSocket base URL.
- * If VITE_WS_URL is set, always use it (dev or staging).
- * In production (served via nginx with no env override), auto-detect from page URL.
+ * In production, auto-detect from page URL (nginx proxies /ws to gateway).
+ * In development, use VITE_WS_URL env var.
  */
 function resolveWsUrl(): string {
   const env = import.meta.env.VITE_WS_URL;
   if (env) return env;
-  // Auto-detect from page URL (production behind nginx)
   if (typeof window !== 'undefined') {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${proto}//${window.location.host}`;
   }
-  return 'ws://localhost:8086';
+  return 'ws://localhost:8080';
 }
 
 export const WS_URL = resolveWsUrl();
+const API_BASE = resolveApiBaseUrl();
 
-/** Whether to use mock data stream instead of real backend WebSocket */
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
-
-// Backend service base URLs (defaults for dev without API Gateway)
-export const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8081';
-export const MAP_API_URL = import.meta.env.VITE_MAP_API_URL || 'http://localhost:8082';
-export const LOCOMOTIVE_API_URL = import.meta.env.VITE_LOCOMOTIVE_API_URL || 'http://localhost:8083';
-export const NORMALIZATION_API_URL = import.meta.env.VITE_NORMALIZATION_API_URL || 'http://localhost:8085';
+// Backend service base URLs
+export const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || API_BASE;
+export const MAP_API_URL = import.meta.env.VITE_MAP_API_URL || API_BASE;
+export const LOCOMOTIVE_API_URL = import.meta.env.VITE_LOCOMOTIVE_API_URL || API_BASE;
+export const NORMALIZATION_API_URL = import.meta.env.VITE_NORMALIZATION_API_URL || API_BASE;
 
 export const MAX_CHART_POINTS = 300;
 export const MAX_ALERTS = 200;
@@ -35,7 +46,8 @@ export const RECONNECT_MAX_MS = 30000;
 export const HEARTBEAT_INTERVAL_MS = 15000;
 export const HEARTBEAT_TIMEOUT_MS = 5000;
 export const POLL_INTERVAL_MS = 2000;
-export const WS_FALLBACK_ATTEMPTS = 3;
+export const WS_FALLBACK_ATTEMPTS = 1;
+export const WS_CONNECT_TIMEOUT_MS = 4000;
 
 /**
  * Backend WebSocket channel paths (Normalization Service).
@@ -70,7 +82,7 @@ export function getWsChannelUrl(role: string, locomotiveId?: string): string {
  * Uses the same gateway as AUTH_API_URL → /poll/:role/:locomotiveId
  */
 export function getPollChannelUrl(role: string, locomotiveId?: string): string {
-  const base = AUTH_API_URL.replace(/\/+$/, '');
+  const base = API_BASE.replace(/\/+$/, '');
   switch (role) {
     case 'driver':
       return locomotiveId ? `${base}/poll/driver/${locomotiveId}` : `${base}/poll/driver`;
