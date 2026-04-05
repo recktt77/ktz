@@ -7,6 +7,7 @@ import { SupervisorDashboard } from './SupervisorDashboard';
 import { LocomotiveSwitcher } from '@/widgets/common/LocomotiveSwitcher';
 import { ConnectionBadge } from '@/widgets/common/ConnectionBadge';
 import * as authApi from '@/services/api/authService';
+import { SimulatorPanel } from '@/widgets/admin/SimulatorPanel';
 import type { Invitation } from '@/types';
 
 type AdminTab = 'driver' | 'dispatcher' | 'engineer' | 'supervisor' | 'settings';
@@ -124,7 +125,12 @@ export function AdminDashboard() {
           {activeTab === 'dispatcher' && <DispatcherDashboard />}
           {activeTab === 'engineer' && <EngineerDashboard />}
           {activeTab === 'supervisor' && <SupervisorDashboard />}
-          {activeTab === 'settings' && <AdminSettings />}
+          {activeTab === 'settings' && (
+            <>
+              <SimulatorPanel />
+              <AdminSettings />
+            </>
+          )}
         </div>
       </main>
     </div>

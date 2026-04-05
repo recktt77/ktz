@@ -5,6 +5,8 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 
 import { ConnectionBadge } from '@/widgets/common/ConnectionBadge';
 import { LocomotiveSwitcher } from '@/widgets/common/LocomotiveSwitcher';
+import { ExportButtons } from '@/widgets/common/ExportButtons';
+import { SimulatorPanel } from '@/widgets/admin/SimulatorPanel';
 import { DriverDashboard } from '@/pages/DriverDashboard';
 import { DispatcherDashboard } from '@/pages/DispatcherDashboard';
 import { EngineerDashboard } from '@/pages/EngineerDashboard';
@@ -153,6 +155,9 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
 
   const selectedRole = useDashboardStore((s) => s.selectedRole);
   const setRole = useDashboardStore((s) => s.setRole);
+  const selectedLocoId = useDashboardStore((s) => s.selectedLocomotiveId);
+  const [showSimulator, setShowSimulator] = useState(false);
+  const isAdmin = user?.roles?.includes('admin');
 
   const Dashboard = dashboards[selectedRole as Exclude<UserRole, 'admin'>] ?? DriverDashboard;
 
@@ -216,6 +221,11 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
               <LocomotiveSwitcher />
             </div>
             <div className="flex items-center gap-3">
+              <ExportButtons
+                role={(selectedRole === 'admin' ? 'driver' : selectedRole) as 'driver' | 'dispatcher' | 'engineer' | 'supervisor'}
+                locomotiveId={selectedLocoId ?? undefined}
+                compact
+              />
               <ConnectionBadge />
               <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                 {new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
