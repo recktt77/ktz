@@ -56,6 +56,9 @@ export function getWsChannelUrl(role: string, locomotiveId?: string): string {
       return locomotiveId ? `${base}/ws/engineer/${locomotiveId}` : `${base}/ws/engineer`;
     case 'supervisor':
       return `${base}/ws/supervisor`;
+    case 'admin':
+      // Admin sees all locomotives — subscribe to dispatcher (fleet) view
+      return `${base}/ws/dispatcher`;
     default:
       return `${base}/ws/live`;
   }

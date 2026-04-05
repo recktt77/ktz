@@ -74,10 +74,12 @@ app.use('/reports', authMiddleware, proxy(config.services.normalization, { '^/':
 app.use('/ai-caller', authMiddleware, proxy(config.services.aiCaller, { '^/ai-caller': '/' }));
 
 // ─── WebSocket proxy (:8086) ─────────────────────────────
+// NOTE: ws: false — we handle upgrade manually via server.on('upgrade').
+// Using ws: true + manual upgrade causes double-handling and instant disconnects.
 const wsProxy = createProxyMiddleware({
   target: config.services.normalizationWs,
   changeOrigin: true,
-  ws: true,
+  ws: false,
   timeout: 0, // no timeout for WS
   on: {
     error(err, _req, res) {

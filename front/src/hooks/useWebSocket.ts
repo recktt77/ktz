@@ -5,19 +5,24 @@ import { useDashboardStore } from '@/store';
 import {
   getWsChannelUrl,
   getPollChannelUrl,
-  WS_FALLBACK_ATTEMPTS,
   POLL_INTERVAL_MS,
+  WS_FALLBACK_ATTEMPTS,
 } from '@/lib/constants';
+
+/** Minimum time (ms) a WS must stay open to count as "stable". */
+const WS_STABLE_MS = 3000;
+/** Max rapid WS failures before falling back to polling. */
+const MAX_RAPID_FAILURES = 3;
 
 export function useWebSocket(): void {
   const setConnectionStatus = useDashboardStore((s) => s.setConnectionStatus);
   const selectedRole = useDashboardStore((s) => s.selectedRole);
-  const selectedLocomotiveId = useDashboardStore((s) => s.selectedLocomotiveId);
   const wsRef = useRef<WebSocketClient | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const failCountRef = useRef(0);
   const pollingActiveRef = useRef(false);
   const firstPollRef = useRef(true);
+  const openedAtRef = useRef(0);
 
   const startPolling = useCallback(
     (pollUrl: string) => {
@@ -63,8 +68,10 @@ export function useWebSocket(): void {
   );
 
   useEffect(() => {
-    const wsUrl = getWsChannelUrl(selectedRole, selectedLocomotiveId ?? undefined);
-    const pollUrl = getPollChannelUrl(selectedRole, selectedLocomotiveId ?? undefined);
+    // Connect by role only (no locomotiveId) — server sends all locomotives for the role.
+    // This avoids re-connect loops when selectedLocomotiveId changes after snapshot.
+    const wsUrl = getWsChannelUrl(selectedRole);
+    const pollUrl = getPollChannelUrl(selectedRole);
 
     failCountRef.current = 0;
     pollingActiveRef.current = false;
@@ -101,5 +108,5 @@ export function useWebSocket(): void {
       }
       pollingActiveRef.current = false;
     };
-  }, [setConnectionStatus, selectedRole, selectedLocomotiveId, startPolling]);
+  }, [setConnectionStatus, selectedRole, startPolling]);
 }
