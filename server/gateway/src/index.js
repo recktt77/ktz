@@ -69,6 +69,9 @@ app.use('/thresholds', authMiddleware, requireRole('admin', 'engineer'), proxy(c
 app.use('/weights', authMiddleware, requireRole('admin', 'engineer'), proxy(config.services.normalization, { '^/': '/weights/' }));
 app.use('/reports', authMiddleware, proxy(config.services.normalization, { '^/': '/reports/' }));
 
+// ─── AI-Caller Service (:8087) ───────────────────────────
+app.use('/ai-caller', authMiddleware, proxy(config.services.aiCaller, { '^/ai-caller': '/' }));
+
 // ─── WebSocket proxy (:8086) ─────────────────────────────
 const wsProxy = createProxyMiddleware({
   target: config.services.normalizationWs,
@@ -99,6 +102,7 @@ const server = app.listen(config.port, () => {
   console.log('  Locomotive   →', config.services.locomotive);
   console.log('  Normalization→', config.services.normalization);
   console.log('  WS           →', config.services.normalizationWs);
+  console.log('  AI-Caller    →', config.services.aiCaller);
 });
 
 // Manually handle upgrade for WS proxy

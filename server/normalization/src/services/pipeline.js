@@ -198,9 +198,31 @@ async function processRawTelemetry(event, wsBroadcast) {
 
     for (const alert of created) {
       wsBroadcast('alert_created', alert);
+
+      // Publish critical alerts to RabbitMQ for AI-Caller
+      if (alert.severity === 'critical') {
+        rabbitConsumer.publish(config.rabbitmq.publishKeys.alertCriticalCreated, {
+          alert_id: alert.id,
+          locomotive_id: alert.locomotive_id,
+          locomotive_model: alert.locomotive_model,
+          severity: alert.severity,
+          metric: alert.metric,
+          component: alert.component,
+          value: alert.value,
+          threshold: alert.threshold,
+          title: alert.title,
+          timestamp: alert.timestamp_utc,
+        });
+      }
     }
     for (const r of resolved) {
       wsBroadcast('alert_resolved', r);
+
+      // Notify AI-Caller to cancel retries
+      rabbitConsumer.publish(config.rabbitmq.publishKeys.alertCriticalResolved, {
+        alert_id: r.id,
+        locomotive_id: r.locomotive_id,
+      });
     }
 
     // 6. Update in-memory state

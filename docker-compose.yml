@@ -203,6 +203,61 @@ services:
         condition: service_started
 
   # ══════════════════════════════════════════════════════════
+  # TELEPHONY (Asterisk PBX)
+  # ══════════════════════════════════════════════════════════
+
+  asterisk:
+    build:
+      context: ./server/asterisk
+      dockerfile: Dockerfile
+    container_name: ktzh_asterisk
+    restart: unless-stopped
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "8088:8088"
+      - "10000-10100:10000-10100/udp"
+
+  # ══════════════════════════════════════════════════════════
+  # AI CALLER
+  # ══════════════════════════════════════════════════════════
+
+  ai-caller:
+    build:
+      context: ./server/ai-caller
+      dockerfile: Dockerfile
+    container_name: ktzh_ai_caller
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+      - "9090:9090"
+    environment:
+      PORT: 8087
+      AUDIOSOCKET_PORT: 9090
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: realtime_ktzh
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_SCHEMA: ai_caller
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      ASTERISK_ARI_URL: http://asterisk:8088
+      ASTERISK_ARI_USER: ai-caller
+      ASTERISK_ARI_PASSWORD: aicaller_secret
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-placeholder}
+      OPENAI_REALTIME_MODEL: gpt-4o-realtime-preview
+      RETRY_INTERVAL_MS: 300000
+      RETRY_MAX_ATTEMPTS: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      asterisk:
+        condition: service_started
+
+  # ══════════════════════════════════════════════════════════
   # API GATEWAY
   # ══════════════════════════════════════════════════════════
 
@@ -221,6 +276,7 @@ services:
       LOCOMOTIVE_URL: http://locomotive:8083
       NORMALIZATION_URL: http://normalization:8085
       NORMALIZATION_WS_URL: http://normalization:8086
+      AI_CALLER_URL: http://ai-caller:8087
       JWT_ACCESS_SECRET: ktzh-access-secret-change-in-prod
       CORS_ORIGIN: http://localhost:3002
     depends_on:
@@ -228,6 +284,7 @@ services:
       - map-service
       - locomotive
       - normalization
+      - ai-caller
 
   # ══════════════════════════════════════════════════════════
   # FRONTEND

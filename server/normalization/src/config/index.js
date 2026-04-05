@@ -26,6 +26,8 @@ module.exports = {
       normalizedCreated: 'telemetry.normalized.created',
       healthUpdated: 'health.snapshot.updated',
       roleViewUpdated: 'role.view.updated',
+      alertCriticalCreated: 'alert.critical.created',
+      alertCriticalResolved: 'alert.critical.resolved',
     },
   },
 
