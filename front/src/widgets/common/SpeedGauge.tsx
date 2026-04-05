@@ -4,9 +4,10 @@ import { useTelemetry } from '@/hooks/useTelemetry';
 interface Props {
   locoId: string | null;
   maxSpeed?: number;
+  size?: number;
 }
 
-export function SpeedGauge({ locoId, maxSpeed = 160 }: Props) {
+export function SpeedGauge({ locoId, maxSpeed = 160, size: propSize }: Props) {
   const telemetry = useTelemetry(locoId);
   const rawSpeed = telemetry?.speed_kmh ?? 0;
 
@@ -39,11 +40,11 @@ export function SpeedGauge({ locoId, maxSpeed = 160 }: Props) {
   const speed = displaySpeed;
   const pct = Math.min(speed / maxSpeed, 1);
 
-  const size = 160;
+  const size = propSize ?? 160;
   const cx = size / 2;
   const cy = size / 2 + 10;
-  const r = 60;
-  const strokeW = 14;
+  const r = size * 0.375;
+  const strokeW = size * 0.088;
   const startAngle = Math.PI;
   const totalArc = Math.PI;
   const filledArc = totalArc * pct;
@@ -74,10 +75,14 @@ export function SpeedGauge({ locoId, maxSpeed = 160 }: Props) {
     return { inner, outer, labelPos, value: Math.round(maxSpeed * t) };
   });
 
+  const fontSize = size * 0.2;
+  const unitSize = size * 0.069;
+  const tickFontSize = size * 0.056;
+
   return (
-    <div className="kpi-card" style={{ alignItems: 'center', justifyContent: 'center' }}>
+    <div className="kpi-card" style={{ alignItems: 'center', justifyContent: 'center', height: '100%' }}>
       <div className="kpi-card__label" style={{ alignSelf: 'flex-start' }}>Скорость</div>
-      <svg width={size} height={size / 2 + 36} viewBox={`0 0 ${size} ${size / 2 + 36}`} style={{ marginTop: -4 }}>
+      <svg width={size} height={size / 2 + 36} viewBox={`0 0 ${size} ${size / 2 + 36}`} style={{ marginTop: -4, maxWidth: '100%' }}>
         <defs>
           <filter id="gauge-glow">
             <feGaussianBlur stdDeviation="4" result="glow" />
@@ -97,13 +102,13 @@ export function SpeedGauge({ locoId, maxSpeed = 160 }: Props) {
             <line x1={t.inner.x} y1={t.inner.y} x2={t.outer.x} y2={t.outer.y}
               stroke="rgba(255,255,255,0.12)" strokeWidth={1.5} />
             <text x={t.labelPos.x} y={t.labelPos.y} textAnchor="middle" dominantBaseline="middle"
-              fill="rgba(255,255,255,0.2)" fontSize="9" fontWeight="600">{t.value}</text>
+              fill="rgba(255,255,255,0.2)" fontSize={tickFontSize} fontWeight="600">{t.value}</text>
           </g>
         ))}
         {/* Center value */}
-        <text x={cx} y={cy + 2} textAnchor="middle" fill="#eae6df" fontSize="32" fontWeight="800"
+        <text x={cx} y={cy + 2} textAnchor="middle" fill="#eae6df" fontSize={fontSize} fontWeight="800"
           fontFamily="inherit">{Math.round(speed)}</text>
-        <text x={cx} y={cy + 20} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="11"
+        <text x={cx} y={cy + fontSize * 0.6} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize={unitSize}
           fontWeight="600">км/ч</text>
       </svg>
     </div>
