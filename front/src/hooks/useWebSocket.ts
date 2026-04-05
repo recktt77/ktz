@@ -3,11 +3,13 @@ import { WebSocketClient } from '@/services/ws/WebSocketClient';
 import { routeMessageBatch } from '@/services/ws/messageRouter';
 import { useDashboardStore } from '@/store';
 import {
+  USE_MOCK,
   getWsChannelUrl,
   getPollChannelUrl,
   POLL_INTERVAL_MS,
   WS_FALLBACK_ATTEMPTS,
 } from '@/lib/constants';
+import { MockStreamManager } from '@/services/mock/MockStreamManager';
 
 /** Minimum time (ms) a WS must stay open to count as "stable". */
 const WS_STABLE_MS = 3000;
@@ -19,10 +21,25 @@ export function useWebSocket(): void {
   const selectedRole = useDashboardStore((s) => s.selectedRole);
   const wsRef = useRef<WebSocketClient | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mockRef = useRef<MockStreamManager | null>(null);
   const failCountRef = useRef(0);
   const pollingActiveRef = useRef(false);
   const firstPollRef = useRef(true);
   const openedAtRef = useRef(0);
+
+  // ── Mock mode: use MockStreamManager instead of real WS ──
+  useEffect(() => {
+    if (!USE_MOCK) return;
+    const mock = new MockStreamManager();
+    mock.onFlush(routeMessageBatch);
+    mock.start();
+    mockRef.current = mock;
+    setConnectionStatus('connected');
+    return () => {
+      mock.stop();
+      mockRef.current = null;
+    };
+  }, [setConnectionStatus]);
 
   const startPolling = useCallback(
     (pollUrl: string) => {
@@ -68,6 +85,9 @@ export function useWebSocket(): void {
   );
 
   useEffect(() => {
+    // Skip real WS when in mock mode
+    if (USE_MOCK) return;
+
     // Connect by role only (no locomotiveId) — server sends all locomotives for the role.
     // This avoids re-connect loops when selectedLocomotiveId changes after snapshot.
     const wsUrl = getWsChannelUrl(selectedRole);

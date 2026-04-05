@@ -4,13 +4,11 @@ import { useAuthStore } from '@/store/authStore';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 import { ConnectionBadge } from '@/widgets/common/ConnectionBadge';
-import { RoleSwitcher } from '@/widgets/common/RoleSwitcher';
 import { LocomotiveSwitcher } from '@/widgets/common/LocomotiveSwitcher';
 import { DriverDashboard } from '@/pages/DriverDashboard';
 import { DispatcherDashboard } from '@/pages/DispatcherDashboard';
 import { EngineerDashboard } from '@/pages/EngineerDashboard';
 import { SupervisorDashboard } from '@/pages/SupervisorDashboard';
-import { AdminDashboard } from '@/pages/AdminDashboard';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import type { UserRole } from '@/types';
@@ -72,12 +70,12 @@ export default function App() {
   const setRole = useDashboardStore((s) => s.setRole);
   useEffect(() => {
     if (user?.roles?.length) {
-      // Admin gets special treatment — set 'admin' as role
+      const dashboardRoles: UserRole[] = ['driver', 'dispatcher', 'engineer', 'supervisor'];
+      // Admin can access all dashboards — default to driver
       if (user.roles.includes('admin')) {
-        setRole('admin');
+        setRole('driver');
         return;
       }
-      const dashboardRoles: UserRole[] = ['driver', 'dispatcher', 'engineer', 'supervisor'];
       const firstRole = user.roles.find((r) => dashboardRoles.includes(r as UserRole));
       if (firstRole) {
         setRole(firstRole as UserRole);
@@ -111,62 +109,126 @@ export default function App() {
   return <AuthenticatedApp user={user} onLogout={logout} />;
 }
 
+const sidebarNav: { id: Exclude<UserRole, 'admin'>; label: string; icon: React.ReactNode }[] = [
+  {
+    id: 'driver',
+    label: 'Машинист',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'dispatcher',
+    label: 'Диспетчер',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'engineer',
+    label: 'Инженер',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+      </svg>
+    ),
+  },
+  {
+    id: 'supervisor',
+    label: 'Руководитель',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+];
+
 function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthStore.getState>['user']; onLogout: () => void }) {
   useWebSocket();
 
   const selectedRole = useDashboardStore((s) => s.selectedRole);
-
-  // Admin gets its own full-page layout with sidebar
-  if (selectedRole === 'admin' || user?.roles?.includes('admin')) {
-    return <AdminDashboard />;
-  }
+  const setRole = useDashboardStore((s) => s.setRole);
 
   const Dashboard = dashboards[selectedRole as Exclude<UserRole, 'admin'>] ?? DriverDashboard;
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-      {/* Header */}
-      <header className="app-header sticky top-0 z-50 px-3 py-1">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2.5">
-              <img src="/header-logo.svg" alt="KTZ" className="h-7 w-auto" />
-              <div>
-                <h1 className="text-sm font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                  {roleTitles[selectedRole as Exclude<UserRole, 'admin'>] ?? 'Dashboard'}
-                </h1>
-                <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                  Digital Twin
-                </span>
+    <div className="admin-layout">
+      {/* Sidebar */}
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar__logo">
+          <img src="/header-logo.svg" alt="КТЖ" className="h-8 w-auto" />
+          <span className="admin-sidebar__brand">КТЖ</span>
+        </div>
+
+        <nav className="admin-sidebar__nav">
+          {sidebarNav.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setRole(item.id)}
+              className={`admin-sidebar__link ${selectedRole === item.id ? 'admin-sidebar__link--active' : ''}`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="admin-sidebar__footer">
+          <div className="admin-sidebar__user">
+            <div className="admin-sidebar__avatar">
+              {user?.full_name?.[0]?.toUpperCase() ?? 'U'}
+            </div>
+            <div className="admin-sidebar__user-info">
+              <div className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {user?.full_name ?? 'User'}
+              </div>
+              <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                {roleTitles[selectedRole as Exclude<UserRole, 'admin'>] ?? ''}
               </div>
             </div>
-            <LocomotiveSwitcher />
           </div>
-          <div className="flex items-center gap-3">
-            <RoleSwitcher />
-            <ConnectionBadge />
-            {user && (
-              <div className="flex items-center gap-2 pl-3" style={{ borderLeft: '1px solid var(--border-card)' }}>
-                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{user.full_name}</span>
-                <button
-                  onClick={onLogout}
-                  className="rounded-md px-2.5 py-1 text-xs font-medium transition-all"
-                  style={{ color: 'var(--text-muted)', background: 'transparent' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--accent-amber)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-                >
-                  Выйти
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={onLogout}
+            className="admin-sidebar__logout"
+            title="Выйти"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Dashboard content */}
-      <main className="mx-auto max-w-screen-2xl px-3 py-2">
-        <Dashboard />
-      </main>
+      {/* Main content */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+        <header className="app-header sticky top-0 z-50 px-3 py-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-4">
+              <h1 className="text-sm font-bold tracking-tight uppercase" style={{ color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>
+                {roleTitles[selectedRole as Exclude<UserRole, 'admin'>] ?? 'Dashboard'}
+              </h1>
+              <LocomotiveSwitcher />
+            </div>
+            <div className="flex items-center gap-3">
+              <ConnectionBadge />
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                {new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Dashboard content */}
+        <main style={{ flex: 1, padding: '8px 12px' }}>
+          <Dashboard />
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useRef, useEffect, useState } from 'react';
 import { useTelemetry } from '@/hooks/useTelemetry';
 
 interface Props {
@@ -7,109 +8,103 @@ interface Props {
 
 export function SpeedGauge({ locoId, maxSpeed = 160 }: Props) {
   const telemetry = useTelemetry(locoId);
-  const speed = telemetry?.speed_kmh ?? 0;
+  const rawSpeed = telemetry?.speed_kmh ?? 0;
+
+  // Smoothly animate speed to avoid jump on reload
+  const [displaySpeed, setDisplaySpeed] = useState(rawSpeed);
+  const rafRef = useRef<number>(0);
+  const targetRef = useRef(rawSpeed);
+
+  useEffect(() => {
+    targetRef.current = rawSpeed;
+    let start: number | null = null;
+    const from = displaySpeed;
+    const to = rawSpeed;
+    const duration = 800;
+
+    function step(ts: number) {
+      if (start === null) start = ts;
+      const elapsed = ts - start;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = t * (2 - t); // ease-out
+      setDisplaySpeed(from + (to - from) * eased);
+      if (t < 1) rafRef.current = requestAnimationFrame(step);
+    }
+
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [rawSpeed]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const speed = displaySpeed;
   const pct = Math.min(speed / maxSpeed, 1);
 
-  // Arc parameters (semi-circle gauge)
-  const size = 120;
+  const size = 160;
   const cx = size / 2;
-  const cy = size / 2 + 6;
-  const r = 46;
-  const strokeW = 8;
+  const cy = size / 2 + 10;
+  const r = 60;
+  const strokeW = 14;
   const startAngle = Math.PI;
-  const endAngle = 0;
   const totalArc = Math.PI;
   const filledArc = totalArc * pct;
 
   function polarToCart(angle: number) {
-    return {
-      x: cx + r * Math.cos(angle),
-      y: cy - r * Math.sin(angle),
-    };
+    return { x: cx + r * Math.cos(angle), y: cy - r * Math.sin(angle) };
   }
 
-  // Background arc (full semi-circle, left to right)
   const bgStart = polarToCart(startAngle);
-  const bgEnd = polarToCart(endAngle);
+  const bgEnd = polarToCart(0);
   const bgPath = `M ${bgStart.x} ${bgStart.y} A ${r} ${r} 0 0 1 ${bgEnd.x} ${bgEnd.y}`;
 
-  // Filled arc
   const fillEnd = polarToCart(startAngle - filledArc);
   const largeArc = filledArc > Math.PI / 2 ? 1 : 0;
-  const fillPath = filledArc > 0.001
+  const fillPath = pct > 0.005
     ? `M ${bgStart.x} ${bgStart.y} A ${r} ${r} 0 ${largeArc} 1 ${fillEnd.x} ${fillEnd.y}`
     : '';
 
-  // Gradient color based on speed
-  const color = speed > maxSpeed * 0.85
-    ? 'var(--status-critical)'
-    : speed > maxSpeed * 0.6
-      ? 'var(--accent-amber)'
-      : 'var(--accent-cyan)';
+  const color = speed > maxSpeed * 0.85 ? '#ef4444'
+    : speed > maxSpeed * 0.6 ? '#e8943a' : '#11b7e7';
 
-  // Tick marks
+  // 5 tick marks
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => {
     const angle = startAngle - t * totalArc;
-    const inner = { x: cx + (r - 12) * Math.cos(angle), y: cy - (r - 12) * Math.sin(angle) };
-    const outer = { x: cx + (r + 3) * Math.cos(angle), y: cy - (r + 3) * Math.sin(angle) };
-    const labelPos = { x: cx + (r - 22) * Math.cos(angle), y: cy - (r - 22) * Math.sin(angle) };
+    const inner = { x: cx + (r - 18) * Math.cos(angle), y: cy - (r - 18) * Math.sin(angle) };
+    const outer = { x: cx + (r + 4) * Math.cos(angle), y: cy - (r + 4) * Math.sin(angle) };
+    const labelPos = { x: cx + (r - 30) * Math.cos(angle), y: cy - (r - 30) * Math.sin(angle) };
     return { inner, outer, labelPos, value: Math.round(maxSpeed * t) };
   });
 
   return (
-    <div className="kpi-card kpi-card--cyan flex flex-col items-center">
-      <div className="kpi-card__label">Скорость</div>
-      <svg width={size} height={size / 2 + 30} viewBox={`0 0 ${size} ${size / 2 + 30}`}>
+    <div className="kpi-card" style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <div className="kpi-card__label" style={{ alignSelf: 'flex-start' }}>Скорость</div>
+      <svg width={size} height={size / 2 + 36} viewBox={`0 0 ${size} ${size / 2 + 36}`} style={{ marginTop: -4 }}>
+        <defs>
+          <filter id="gauge-glow">
+            <feGaussianBlur stdDeviation="4" result="glow" />
+            <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
         {/* Background arc */}
-        <path
-          d={bgPath}
-          fill="none"
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth={strokeW}
-          strokeLinecap="round"
-        />
-        {/* Filled arc */}
+        <path d={bgPath} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeW} strokeLinecap="round" />
+        {/* Filled arc — no CSS transition, animated via RAF */}
         {fillPath && (
-          <path
-            d={fillPath}
-            fill="none"
-            stroke={color}
-            strokeWidth={strokeW}
-            strokeLinecap="round"
-            style={{
-              filter: `drop-shadow(0 0 8px ${color})`,
-              transition: 'all 0.8s ease-out',
-            }}
-          />
+          <path d={fillPath} fill="none" stroke={color} strokeWidth={strokeW} strokeLinecap="round"
+            filter="url(#gauge-glow)" />
         )}
         {/* Ticks */}
         {ticks.map((t, i) => (
           <g key={i}>
-            <line
-              x1={t.inner.x} y1={t.inner.y}
-              x2={t.outer.x} y2={t.outer.y}
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth={1.5}
-            />
-            <text
-              x={t.labelPos.x} y={t.labelPos.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill="rgba(255,255,255,0.3)"
-              fontSize="9"
-              fontWeight="600"
-            >
-              {t.value}
-            </text>
+            <line x1={t.inner.x} y1={t.inner.y} x2={t.outer.x} y2={t.outer.y}
+              stroke="rgba(255,255,255,0.12)" strokeWidth={1.5} />
+            <text x={t.labelPos.x} y={t.labelPos.y} textAnchor="middle" dominantBaseline="middle"
+              fill="rgba(255,255,255,0.2)" fontSize="9" fontWeight="600">{t.value}</text>
           </g>
         ))}
         {/* Center value */}
-        <text x={cx} y={cy - 4} textAnchor="middle" fill={color} fontSize="22" fontWeight="800" fontFamily="inherit">
-          {Math.round(speed)}
-        </text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="8" fontWeight="600">
-          км/ч
-        </text>
+        <text x={cx} y={cy + 2} textAnchor="middle" fill="#eae6df" fontSize="32" fontWeight="800"
+          fontFamily="inherit">{Math.round(speed)}</text>
+        <text x={cx} y={cy + 20} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="11"
+          fontWeight="600">км/ч</text>
       </svg>
     </div>
   );
