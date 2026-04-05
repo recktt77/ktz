@@ -46,7 +46,8 @@ export const RECONNECT_MAX_MS = 30000;
 export const HEARTBEAT_INTERVAL_MS = 15000;
 export const HEARTBEAT_TIMEOUT_MS = 5000;
 export const POLL_INTERVAL_MS = 2000;
-export const WS_FALLBACK_ATTEMPTS = 3;
+export const WS_FALLBACK_ATTEMPTS = 1;
+export const WS_CONNECT_TIMEOUT_MS = 4000;
 
 /**
  * Backend WebSocket channel paths (Normalization Service).

@@ -6,6 +6,7 @@ import {
   RECONNECT_MAX_MS,
   HEARTBEAT_INTERVAL_MS,
   HEARTBEAT_TIMEOUT_MS,
+  WS_CONNECT_TIMEOUT_MS,
 } from '@/lib/constants';
 
 type StatusCallback = (
@@ -23,6 +24,7 @@ export class WebSocketClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private pongTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
 
   // RAF batch buffer
@@ -50,7 +52,16 @@ export class WebSocketClient {
       return;
     }
 
+    // Kill the connection if handshake doesn't complete quickly
+    // (university proxies that strip Upgrade headers cause long hangs)
+    this.connectTimer = setTimeout(() => {
+      if (this.ws?.readyState !== WebSocket.OPEN) {
+        this.ws?.close();
+      }
+    }, WS_CONNECT_TIMEOUT_MS);
+
     this.ws.onopen = () => {
+      if (this.connectTimer) { clearTimeout(this.connectTimer); this.connectTimer = null; }
       this.reconnectAttempt = 0;
       this.onStatusChange('connected');
       this.startHeartbeat();
@@ -165,6 +176,7 @@ export class WebSocketClient {
     this.destroyed = true;
     this.cleanup();
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.connectTimer) clearTimeout(this.connectTimer);
     this.ws?.close();
     this.ws = null;
   }
