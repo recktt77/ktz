@@ -278,7 +278,7 @@ services:
       NORMALIZATION_WS_URL: http://normalization:8086
       AI_CALLER_URL: http://ai-caller:8087
       JWT_ACCESS_SECRET: ktzh-access-secret-change-in-prod
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      CORS_ORIGIN: http://localhost:3002
     depends_on:
       - auth-service
       - map-service

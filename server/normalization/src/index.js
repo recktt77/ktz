@@ -9,7 +9,7 @@ const logger = require('./utils/logger');
 const { initSchema } = require('./db/pool');
 const { migrate } = require('./db/migrate');
 const rabbitConsumer = require('./services/rabbitConsumer');
-const { processRawTelemetry, refreshThresholdCache } = require('./services/pipeline');
+const { processRawTelemetry, loadStateFromDb, startFleetSummaryTimer } = require('./services/pipeline');
 const { refreshConfigCache } = require('./services/healthCalculator');
 const wsServer = require('./ws/wsServer');
 const { errorHandler } = require('./middleware/errorHandler');
@@ -59,10 +59,12 @@ async function start() {
     await migrate();
     logger.info('Database ready');
 
-    // Load config caches
+    // Load config caches (thresholds + weights for health scoring)
     await refreshConfigCache();
-    await refreshThresholdCache();
     logger.info('Config caches loaded');
+
+    // Recover in-memory state from DB (so snapshot_init works after restart)
+    await loadStateFromDb();
 
     // HTTP server for REST API
     const httpServer = http.createServer(app);
@@ -85,6 +87,9 @@ async function start() {
     wsHttpServer.listen(config.wsPort, () => {
       logger.info(`Normalization WebSocket on port ${config.wsPort} (API Gateway proxies :8080 → :${config.wsPort})`);
     });
+
+    // Fleet summary timer — ensures supervisor gets periodic updates even without telemetry
+    startFleetSummaryTimer(wsServer.broadcast);
 
   } catch (err) {
     logger.error('Failed to start Normalization Service', { error: err.message, stack: err.stack });

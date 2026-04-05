@@ -43,6 +43,10 @@ async function connect(handler) {
 
     connection.on('close', () => {
       logger.warn('RabbitMQ connection closed, will retry...');
+      // Clean up old references before reconnecting
+      if (connection) {
+        connection.removeAllListeners();
+      }
       channel = null;
       connection = null;
       setTimeout(() => connect(messageHandler), 5000);

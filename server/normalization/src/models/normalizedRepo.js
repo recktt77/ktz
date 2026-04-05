@@ -46,6 +46,20 @@ const normalizedRepo = {
     );
     return rows[0] || null;
   },
+
+  /**
+   * Find distinct locomotive IDs with data in the last N minutes.
+   */
+  async findDistinctLocomotives(withinMinutes = 60) {
+    const { rows } = await query(
+      `SELECT DISTINCT locomotive_id
+       FROM telemetry_normalized
+       WHERE timestamp_utc >= NOW() - INTERVAL '1 minute' * $1
+       ORDER BY locomotive_id`,
+      [withinMinutes]
+    );
+    return rows;
+  },
 };
 
 module.exports = normalizedRepo;

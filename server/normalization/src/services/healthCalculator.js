@@ -436,4 +436,4 @@ function calculateHealth(normalized) {
   throw new Error(`Unknown model: ${normalized.locomotive_model}`);
 }
 
-module.exports = { calculateHealth, refreshConfigCache };
+module.exports = { calculateHealth, refreshConfigCache, getThresholdCache: () => thresholdCache };

@@ -170,6 +170,14 @@ function sendToClient(ws, msg) {
  * Broadcast a message to relevant clients based on message type and payload.
  * This is the main entry point called by the processing pipeline.
  */
+const BACKPRESSURE_LIMIT = 64 * 1024; // 64KB — skip slow clients
+
+function safeSend(ws, msg) {
+  if (ws.readyState === 1 && ws.bufferedAmount < BACKPRESSURE_LIMIT) {
+    ws.send(msg);
+  }
+}
+
 function broadcast(type, payload) {
   if (!wss) return;
 
@@ -185,7 +193,7 @@ function broadcast(type, payload) {
       if (!locoId) return;
       const clients = subscriptionManager.getClientsForLocomotive(locoId);
       for (const ws of clients) {
-        if (ws.readyState === 1) ws.send(msg);
+        safeSend(ws, msg);
       }
       break;
     }
@@ -195,7 +203,7 @@ function broadcast(type, payload) {
       if (!locoId) return;
       const clients = subscriptionManager.getClientsForLocomotive(locoId);
       for (const ws of clients) {
-        if (ws.readyState === 1) ws.send(msg);
+        safeSend(ws, msg);
       }
       break;
     }
@@ -204,7 +212,7 @@ function broadcast(type, payload) {
       // Send to dispatchers
       const dispatchers = subscriptionManager.getClientsByRole('dispatcher');
       for (const ws of dispatchers) {
-        if (ws.readyState === 1) ws.send(msg);
+        safeSend(ws, msg);
       }
       break;
     }
@@ -213,7 +221,7 @@ function broadcast(type, payload) {
       // Send to supervisors
       const supervisors = subscriptionManager.getClientsByRole('supervisor');
       for (const ws of supervisors) {
-        if (ws.readyState === 1) ws.send(msg);
+        safeSend(ws, msg);
       }
       break;
     }
@@ -221,7 +229,7 @@ function broadcast(type, payload) {
     case 'locomotive_status_update': {
       // Send to all
       for (const ws of subscriptionManager.getAllClients()) {
-        if (ws.readyState === 1) ws.send(msg);
+        safeSend(ws, msg);
       }
       break;
     }
@@ -229,7 +237,7 @@ function broadcast(type, payload) {
     default: {
       // Broadcast to all
       for (const ws of subscriptionManager.getAllClients()) {
-        if (ws.readyState === 1) ws.send(msg);
+        safeSend(ws, msg);
       }
     }
   }

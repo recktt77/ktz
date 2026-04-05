@@ -1,11 +1,10 @@
 const { normalize } = require('./adapters');
 const { isDuplicate } = require('./smoothing');
-const { calculateHealth } = require('./healthCalculator');
+const { calculateHealth, getThresholdCache } = require('./healthCalculator');
 const { evaluateAlerts, getActiveAlertsForLoco } = require('./alertService');
 const { buildDriverView, buildDispatcherView, buildEngineerView, buildSupervisorFleetEntry } = require('./roleViewBuilder');
 const normalizedRepo = require('../models/normalizedRepo');
 const healthRepo = require('../models/healthRepo');
-const configRepo = require('../models/configRepo');
 const rabbitConsumer = require('./rabbitConsumer');
 const config = require('../config');
 const logger = require('../utils/logger');
@@ -16,28 +15,8 @@ const logger = require('../utils/logger');
  */
 const locomotiveState = new Map();
 
-/**
- * Threshold cache for alert evaluation.
- */
-let thresholdCache = {};
-
-async function refreshThresholdCache() {
-  try {
-    const thresholds = await configRepo.getThresholds();
-    const cache = {};
-    for (const t of thresholds) {
-      if (!cache[t.model_code]) cache[t.model_code] = {};
-      cache[t.model_code][t.metric] = {
-        warning: t.warning,
-        critical: t.critical,
-        direction: t.direction,
-      };
-    }
-    thresholdCache = cache;
-  } catch (err) {
-    logger.error('Failed to refresh threshold cache', { error: err.message });
-  }
-}
+// Threshold cache is managed by healthCalculator.js (refreshed every 30s)
+// Use getThresholdCache() to access the latest thresholds
 
 // Counter for processed analytics (every N-th tick)
 const processedCounters = new Map();
@@ -193,7 +172,7 @@ async function processRawTelemetry(event, wsBroadcast) {
     }
 
     // 5. Evaluate alerts
-    const modelThresholds = thresholdCache[normalized.locomotive_model] || {};
+    const modelThresholds = getThresholdCache()[normalized.locomotive_model] || {};
     const { created, resolved } = await evaluateAlerts(normalized, modelThresholds);
 
     for (const alert of created) {
@@ -343,7 +322,7 @@ async function loadStateFromDb() {
       const latest = await normalizedRepo.findLatest(locoId);
       if (!latest) continue;
 
-      const normalized = latest.data || latest;
+      const normalized = latest.metrics || latest;
       normalized.locomotive_id = normalized.locomotive_id || locoId;
 
       const processed = calculateHealth(normalized);
@@ -382,7 +361,6 @@ module.exports = {
   getTrackedLocomotiveIds,
   buildSnapshotInit,
   buildFleetSummary,
-  refreshThresholdCache,
   loadStateFromDb,
   startFleetSummaryTimer,
   locomotiveState,
