@@ -104,7 +104,7 @@ services:
       JWT_ACCESS_EXPIRES: 15m
       JWT_REFRESH_EXPIRES: 7d
       FRONTEND_URL: http://localhost:3002
-      CORS_ORIGIN: http://localhost:3002
+      CORS_ORIGIN: http://localhost:3002,https://kiosk.astanait.edu.kz,https://10-1-30-46.sslip.io
       ADMIN_EMAIL: admin@ktzh.kz
       ADMIN_PASSWORD: Admin123!
     depends_on:
@@ -278,7 +278,7 @@ services:
       NORMALIZATION_WS_URL: http://normalization:8086
       AI_CALLER_URL: http://ai-caller:8087
       JWT_ACCESS_SECRET: ktzh-access-secret-change-in-prod
-      CORS_ORIGIN: http://localhost:3002
+      CORS_ORIGIN: http://localhost:3002,https://kiosk.astanait.edu.kz,https://10-1-30-46.sslip.io
     depends_on:
       - auth-service
       - map-service
@@ -296,10 +296,10 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_WS_URL: ${VITE_WS_URL:-}
-        VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:8080}
-        VITE_MAP_API_URL: ${VITE_MAP_API_URL:-http://localhost:8080}
-        VITE_LOCOMOTIVE_API_URL: ${VITE_LOCOMOTIVE_API_URL:-http://localhost:8080}
-        VITE_NORMALIZATION_API_URL: ${VITE_NORMALIZATION_API_URL:-http://localhost:8080}
+        VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-}
+        VITE_MAP_API_URL: ${VITE_MAP_API_URL:-}
+        VITE_LOCOMOTIVE_API_URL: ${VITE_LOCOMOTIVE_API_URL:-}
+        VITE_NORMALIZATION_API_URL: ${VITE_NORMALIZATION_API_URL:-}
     container_name: ktzh_frontend
     restart: unless-stopped
     ports:

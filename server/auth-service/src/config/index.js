@@ -33,7 +33,10 @@ const config = {
     },
 
     cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3002',
+        origin: (process.env.CORS_ORIGIN || 'http://localhost:3002')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean),
     },
 };
 
