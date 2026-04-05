@@ -20,7 +20,7 @@ export function EngineerKZ8APanel({ locoId }: Props) {
     <div className="space-y-4">
       {/* Component health scores */}
       {p && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
           <ScoreCard label="Electrical Supply Risk" value={p.electrical_supply_risk} invert />
           <ScoreCard label="Transformer Health" value={p.transformer_health_score} />
           <ScoreCard label="Transformer Thermal Risk" value={p.transformer_thermal_risk} invert />
@@ -34,7 +34,7 @@ export function EngineerKZ8APanel({ locoId }: Props) {
       )}
 
       {/* Diagnostic charts */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
         <TelemetryChart locoId={locoId} metricKey="catenary_voltage_kv" color="#3b82f6" />
         <TelemetryChart locoId={locoId} metricKey="catenary_current_a" color="#8b5cf6" />
         <TelemetryChart locoId={locoId} metricKey="main_transformer_temp_c" color="#f59e0b" />

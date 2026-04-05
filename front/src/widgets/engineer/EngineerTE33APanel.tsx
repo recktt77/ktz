@@ -22,7 +22,7 @@ export function EngineerTE33APanel({ locoId }: Props) {
     <div className="space-y-4">
       {/* Component health scores */}
       {p && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
           <ScoreCard label="Engine Health" value={p.engine_health_score} />
           <ScoreCard label="Engine Overload Risk" value={p.engine_overload_risk} invert />
           <ScoreCard label="Fuel Efficiency" value={p.fuel_efficiency_score} />
@@ -54,7 +54,7 @@ export function EngineerTE33APanel({ locoId }: Props) {
       </Card>
 
       {/* Diagnostic charts */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
         <TelemetryChart locoId={locoId} metricKey="engine_rpm" color="#3b82f6" />
         <TelemetryChart locoId={locoId} metricKey="engine_load_pct" color="#f59e0b" />
         <TelemetryChart locoId={locoId} metricKey="fuel_consumption_lph" color="#ef4444" />

@@ -24,9 +24,9 @@ export class TE33AGenerator {
 
   private speed = 65;
   private engineRpm = 1450;
-  private engineLoad = 72;
+  private engineLoad = 78;
   private fuelLevel = 68;
-  private fuelConsumption = 185;
+  private fuelConsumption = 210;
   private brakePressure = 4.8;
 
   constructor(id: string) {
@@ -35,11 +35,11 @@ export class TE33AGenerator {
 
   tickTelemetry(): TE33ATelemetry {
     this.speed = walk(this.speed, 2.5, 0, 140);
-    this.engineRpm = walk(this.engineRpm, 50, 600, 2100);
-    this.engineLoad = walk(this.engineLoad, 4, 0, 100);
+    this.engineRpm = walk(this.engineRpm, 50, 900, 2100);
+    this.engineLoad = walk(this.engineLoad, 4, 45, 100);
     this.fuelLevel = Math.max(0, this.fuelLevel - 0.01 - Math.random() * 0.02);
-    this.fuelConsumption = walk(this.fuelConsumption, 10, 80, 350);
-    this.brakePressure = walk(this.brakePressure, 0.1, 2, 7);
+    this.fuelConsumption = walk(this.fuelConsumption, 10, 120, 350);
+    this.brakePressure = walk(this.brakePressure, 0.15, 3, 7);
 
     const engineDegraded = this.engineLoad > 90 || this.engineRpm > 1900;
 
@@ -77,11 +77,28 @@ export class TE33AGenerator {
     const fuelRisk = clamp((30 - this.fuelLevel) * 3, 0, 100);
     const brakeRisk = clamp((4 - this.brakePressure) * 30, 0, 100);
 
-    let hi = 100;
-    hi -= engineRisk * 0.35;
-    hi -= fuelRisk * 0.2;
-    hi -= brakeRisk * 0.15;
-    hi = clamp(Math.round(hi), 0, 100);
+    // Sub-scores computed from real telemetry
+    const engineHealthScore = round(100 - engineRisk);
+    const fuelEfficiencyScore = round(
+      clamp(100 - Math.abs(this.fuelConsumption - 150), 0, 100),
+    );
+    const propulsionHealthScore = round(
+      clamp(100 - engineRisk * 0.5 - brakeRisk * 0.2, 0, 100),
+    );
+    const dynamicBrakeScore = round(
+      this.speed > 20
+        ? clamp(100 - brakeRisk * 0.6, 0, 100)
+        : clamp(15 - brakeRisk * 0.2, 0, 20),
+    );
+
+    // Health index = weighted average of sub-scores
+    const hi = clamp(Math.round(
+      engineHealthScore * 0.30 +
+      fuelEfficiencyScore * 0.20 +
+      propulsionHealthScore * 0.25 +
+      dynamicBrakeScore * 0.10 +
+      (100 - brakeRisk) * 0.15,
+    ), 0, 100);
 
     const label =
       hi >= 80 ? 'Good' : hi >= 50 ? 'Warning' : 'Critical';
@@ -132,15 +149,13 @@ export class TE33AGenerator {
       timestamp_utc: new Date().toISOString(),
       health_index: hi,
       health_status: label as TE33AProcessed['health_status'],
-      engine_health_score: round(100 - engineRisk),
+      engine_health_score: engineHealthScore,
       engine_overload_risk: round(engineRisk),
-      fuel_efficiency_score: round(
-        clamp(100 - Math.abs(this.fuelConsumption - 150), 0, 100),
-      ),
+      fuel_efficiency_score: fuelEfficiencyScore,
       fuel_anomaly_score: fuelRisk > 30 ? round(fuelRisk) : 0,
       fuel_remaining_eta_h: round(fuelHoursRemaining, 1),
-      propulsion_health_score: 88,
-      dynamic_brake_availability_score: this.speed > 20 ? 92 : 0,
+      propulsion_health_score: propulsionHealthScore,
+      dynamic_brake_availability_score: dynamicBrakeScore,
       brake_risk: round(brakeRisk),
       compressor_readiness_score: 95,
       maintenance_alert_score: round(
