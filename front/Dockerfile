@@ -3,7 +3,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm install --ignore-scripts=false
+RUN npm install --ignore-scripts=false --legacy-peer-deps
 
 COPY . .
 

@@ -25,7 +25,10 @@
     "react-router-dom": "^7.14.0",
     "recharts": "^3.8.1",
     "zod": "^4.3.6",
-    "zustand": "^5.0.12"
+    "zustand": "^5.0.12",
+    "three": "^0.170.0",
+    "@react-three/fiber": "^9.0.0",
+    "@react-three/drei": "^10.0.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",
@@ -36,6 +39,7 @@
     "autoprefixer": "^10.4.27",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
-    "vite": "^8.0.3"
+    "vite": "^8.0.3",
+    "@types/three": "^0.170.0"
   }
 }

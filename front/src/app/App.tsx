@@ -11,6 +11,7 @@ import { DispatcherDashboard } from '@/pages/DispatcherDashboard';
 import { EngineerDashboard } from '@/pages/EngineerDashboard';
 import { SupervisorDashboard } from '@/pages/SupervisorDashboard';
 import { AdminDashboard } from '@/pages/AdminDashboard';
+import { LocomotiveViewerPage } from '@/pages/LocomotiveViewerPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import type { UserRole } from '@/types';
@@ -115,6 +116,7 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
   useWebSocket();
 
   const selectedRole = useDashboardStore((s) => s.selectedRole);
+  const [show3D, setShow3D] = useState(false);
 
   // Admin gets its own full-page layout with sidebar
   if (selectedRole === 'admin' || user?.roles?.includes('admin')) {
@@ -143,6 +145,17 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
             <LocomotiveSwitcher />
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShow3D(!show3D)}
+              className="rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+              style={{
+                background: show3D ? 'var(--accent-amber)' : 'var(--bg-elevated)',
+                color: show3D ? 'var(--bg-base)' : 'var(--text-secondary)',
+                border: `1px solid ${show3D ? 'var(--accent-amber)' : 'var(--border-card)'}`,
+              }}
+            >
+              3D
+            </button>
             <RoleSwitcher />
             <ConnectionBadge />
             {user && (
@@ -165,7 +178,7 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
 
       {/* Dashboard content */}
       <main className="mx-auto max-w-screen-2xl px-3 py-2">
-        <Dashboard />
+        {show3D ? <LocomotiveViewerPage /> : <Dashboard />}
       </main>
     </div>
   );
