@@ -109,6 +109,7 @@ function init(server) {
     if (!wss) return;
     wss.clients.forEach((ws) => {
       if (!ws.isAlive) {
+        logger.warn('Heartbeat failed — terminating dead connection');
         subscriptionManager.unsubscribe(ws);
         return ws.terminate();
       }
