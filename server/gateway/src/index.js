@@ -65,6 +65,7 @@ app.use('/snapshots', authMiddleware, proxy(config.services.normalization, { '^/
 app.use('/history', authMiddleware, proxy(config.services.normalization, { '^/': '/history/' }));
 app.use('/replay', authMiddleware, proxy(config.services.normalization, { '^/': '/replay/' }));
 app.use('/role-view', authMiddleware, proxy(config.services.normalization, { '^/': '/role-view/' }));
+app.use('/poll', proxy(config.services.normalization, { '^/': '/poll/' }));
 app.use('/thresholds', authMiddleware, requireRole('admin', 'engineer'), proxy(config.services.normalization, { '^/': '/thresholds/' }));
 app.use('/weights', authMiddleware, requireRole('admin', 'engineer'), proxy(config.services.normalization, { '^/': '/weights/' }));
 app.use('/reports', authMiddleware, proxy(config.services.normalization, { '^/': '/reports/' }));

@@ -1,6 +1,24 @@
 import type { LocomotiveModel } from '@/types';
 
-export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8086';
+/**
+ * Resolve WebSocket base URL.
+ * In production (served via nginx), auto-detect from current page URL
+ * so the browser reuses the same TLS session (critical for self-signed certs).
+ * In development, use VITE_WS_URL env var (e.g. ws://localhost:8080).
+ */
+function resolveWsUrl(): string {
+  const env = import.meta.env.VITE_WS_URL;
+  // If explicitly set to a non-localhost value, use it
+  if (env && !/localhost|127\.0\.0\.1/.test(env)) return env;
+  // Auto-detect from page URL (works in any deployment)
+  if (typeof window !== 'undefined') {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${proto}//${window.location.host}`;
+  }
+  return env || 'ws://localhost:8086';
+}
+
+export const WS_URL = resolveWsUrl();
 
 // Backend service base URLs (defaults for dev without API Gateway)
 export const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8081';
@@ -15,6 +33,8 @@ export const RECONNECT_BASE_MS = 1000;
 export const RECONNECT_MAX_MS = 30000;
 export const HEARTBEAT_INTERVAL_MS = 15000;
 export const HEARTBEAT_TIMEOUT_MS = 5000;
+export const POLL_INTERVAL_MS = 2000;
+export const WS_FALLBACK_ATTEMPTS = 3;
 
 /**
  * Backend WebSocket channel paths (Normalization Service).
@@ -29,15 +49,35 @@ export function getWsChannelUrl(role: string, locomotiveId?: string): string {
   const base = WS_URL.replace(/\/ws\/?$/, '');
   switch (role) {
     case 'driver':
-      return `${base}/ws/driver/${locomotiveId ?? ''}`;
+      return locomotiveId ? `${base}/ws/driver/${locomotiveId}` : `${base}/ws/driver`;
     case 'dispatcher':
       return `${base}/ws/dispatcher`;
     case 'engineer':
-      return `${base}/ws/engineer/${locomotiveId ?? ''}`;
+      return locomotiveId ? `${base}/ws/engineer/${locomotiveId}` : `${base}/ws/engineer`;
     case 'supervisor':
       return `${base}/ws/supervisor`;
     default:
       return `${base}/ws/live`;
+  }
+}
+
+/**
+ * HTTP polling fallback URL (when WebSocket is blocked by proxy).
+ * Uses the same gateway as AUTH_API_URL → /poll/:role/:locomotiveId
+ */
+export function getPollChannelUrl(role: string, locomotiveId?: string): string {
+  const base = AUTH_API_URL.replace(/\/+$/, '');
+  switch (role) {
+    case 'driver':
+      return locomotiveId ? `${base}/poll/driver/${locomotiveId}` : `${base}/poll/driver`;
+    case 'dispatcher':
+      return `${base}/poll/dispatcher`;
+    case 'engineer':
+      return locomotiveId ? `${base}/poll/engineer/${locomotiveId}` : `${base}/poll/engineer`;
+    case 'supervisor':
+      return `${base}/poll/supervisor`;
+    default:
+      return `${base}/poll/live`;
   }
 }
 

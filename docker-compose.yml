@@ -295,7 +295,7 @@ services:
       context: ./front
       dockerfile: Dockerfile
       args:
-        VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:8080}
+        VITE_WS_URL: ${VITE_WS_URL:-}
         VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:8080}
         VITE_MAP_API_URL: ${VITE_MAP_API_URL:-http://localhost:8080}
         VITE_LOCOMOTIVE_API_URL: ${VITE_LOCOMOTIVE_API_URL:-http://localhost:8080}

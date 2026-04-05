@@ -8,12 +8,18 @@ RUN npm install --ignore-scripts=false
 COPY . .
 
 # Vite env vars (baked into bundle at build time)
-# In Docker with API Gateway, all traffic goes through gateway at port 8080
-ARG VITE_WS_URL=ws://localhost:8080
+# WS_URL left empty → frontend auto-detects from window.location
+ARG VITE_WS_URL=
 ARG VITE_AUTH_API_URL=http://localhost:8080
 ARG VITE_MAP_API_URL=http://localhost:8080
 ARG VITE_LOCOMOTIVE_API_URL=http://localhost:8080
 ARG VITE_NORMALIZATION_API_URL=http://localhost:8080
+
+ENV VITE_WS_URL=$VITE_WS_URL
+ENV VITE_AUTH_API_URL=$VITE_AUTH_API_URL
+ENV VITE_MAP_API_URL=$VITE_MAP_API_URL
+ENV VITE_LOCOMOTIVE_API_URL=$VITE_LOCOMOTIVE_API_URL
+ENV VITE_NORMALIZATION_API_URL=$VITE_NORMALIZATION_API_URL
 
 RUN npm run build
 

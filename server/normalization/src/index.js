@@ -19,6 +19,7 @@ const healthRoutes = require('./routes/health');
 const roleViewRoutes = require('./routes/roleViews');
 const configRoutes = require('./routes/config');
 const reportRoutes = require('./routes/reports');
+const pollRoutes = require('./routes/poll');
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.get('/health', (req, res) => {
 // ===== REST Routes =====
 app.use('/', healthRoutes);
 app.use('/role-view', roleViewRoutes);
+app.use('/poll', pollRoutes);
 app.use('/', configRoutes);
 app.use('/reports', reportRoutes);
 
