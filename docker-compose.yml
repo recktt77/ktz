@@ -278,7 +278,7 @@ services:
       NORMALIZATION_WS_URL: http://normalization:8086
       AI_CALLER_URL: http://ai-caller:8087
       JWT_ACCESS_SECRET: ktzh-access-secret-change-in-prod
-      CORS_ORIGIN: http://localhost:3002,https://kiosk.astanait.edu.kz,https://10-1-30-46.sslip.io
+      CORS_ORIGIN: http://localhost,http://localhost:3002,https://kiosk.astanait.edu.kz,https://10-1-30-46.sslip.io
     depends_on:
       - auth-service
       - map-service
@@ -318,12 +318,12 @@ services:
     container_name: ktzh_nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8090:80"
+      - "8443:443"
     environment:
       DOMAIN: ${DOMAIN:-ktzh.example.com}
     volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ${SSL_CERT_PATH:-./.local-ssl}:/etc/letsencrypt:ro
       - certbot_data:/var/www/certbot
     depends_on:
       - gateway

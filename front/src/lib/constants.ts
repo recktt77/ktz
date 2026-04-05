@@ -49,6 +49,8 @@ export const POLL_INTERVAL_MS = 2000;
 export const WS_FALLBACK_ATTEMPTS = 1;
 export const WS_CONNECT_TIMEOUT_MS = 4000;
 
+export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+
 /**
  * Backend WebSocket channel paths (Normalization Service).
  * Used when connecting to the backend WebSocket.

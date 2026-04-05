@@ -11,20 +11,23 @@ import { EngineerDashboard } from '@/pages/EngineerDashboard';
 import { SupervisorDashboard } from '@/pages/SupervisorDashboard';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { AdminDashboard } from '@/pages/AdminDashboard';
 import type { UserRole } from '@/types';
 
-const dashboards: Record<Exclude<UserRole, 'admin'>, React.FC> = {
+const dashboards: Record<UserRole, React.FC> = {
   driver: DriverDashboard,
   dispatcher: DispatcherDashboard,
   engineer: EngineerDashboard,
   supervisor: SupervisorDashboard,
+  admin: AdminDashboard,
 };
 
-const roleTitles: Record<Exclude<UserRole, 'admin'>, string> = {
+const roleTitles: Record<UserRole, string> = {
   driver: 'Панель машиниста',
   dispatcher: 'Диспетчерская',
   engineer: 'Инженер-диагност',
   supervisor: 'Руководитель смены',
+  admin: 'Администратор',
 };
 
 function getInviteCodeFromUrl(): string | null {
@@ -71,9 +74,9 @@ export default function App() {
   useEffect(() => {
     if (user?.roles?.length) {
       const dashboardRoles: UserRole[] = ['driver', 'dispatcher', 'engineer', 'supervisor'];
-      // Admin can access all dashboards — default to driver
+      // Admin can access all dashboards — default to admin panel
       if (user.roles.includes('admin')) {
-        setRole('driver');
+        setRole('admin');
         return;
       }
       const firstRole = user.roles.find((r) => dashboardRoles.includes(r as UserRole));
@@ -109,7 +112,7 @@ export default function App() {
   return <AuthenticatedApp user={user} onLogout={logout} />;
 }
 
-const sidebarNav: { id: Exclude<UserRole, 'admin'>; label: string; icon: React.ReactNode }[] = [
+const sidebarNav: { id: UserRole; label: string; icon: React.ReactNode }[] = [
   {
     id: 'driver',
     label: 'Машинист',
@@ -146,6 +149,15 @@ const sidebarNav: { id: Exclude<UserRole, 'admin'>; label: string; icon: React.R
       </svg>
     ),
   },
+  {
+    id: 'admin',
+    label: 'Администратор',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    ),
+  },
 ];
 
 function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthStore.getState>['user']; onLogout: () => void }) {
@@ -154,7 +166,12 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
   const selectedRole = useDashboardStore((s) => s.selectedRole);
   const setRole = useDashboardStore((s) => s.setRole);
 
-  const Dashboard = dashboards[selectedRole as Exclude<UserRole, 'admin'>] ?? DriverDashboard;
+  const Dashboard = dashboards[selectedRole] ?? DriverDashboard;
+
+  // AdminDashboard has its own full layout with sidebar — render it directly
+  if (selectedRole === 'admin') {
+    return <AdminDashboard />;
+  }
 
   return (
     <div className="admin-layout">
@@ -166,7 +183,9 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
         </div>
 
         <nav className="admin-sidebar__nav">
-          {sidebarNav.map((item) => (
+          {sidebarNav
+            .filter((item) => item.id !== 'admin' || user?.roles?.includes('admin'))
+            .map((item) => (
             <button
               key={item.id}
               onClick={() => setRole(item.id)}
@@ -188,7 +207,7 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
                 {user?.full_name ?? 'User'}
               </div>
               <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                {roleTitles[selectedRole as Exclude<UserRole, 'admin'>] ?? ''}
+                {roleTitles[selectedRole] ?? ''}
               </div>
             </div>
           </div>
@@ -211,7 +230,7 @@ function AuthenticatedApp({ user, onLogout }: { user: ReturnType<typeof useAuthS
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-4">
               <h1 className="text-sm font-bold tracking-tight uppercase" style={{ color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>
-                {roleTitles[selectedRole as Exclude<UserRole, 'admin'>] ?? 'Dashboard'}
+                {roleTitles[selectedRole] ?? 'Dashboard'}
               </h1>
               <LocomotiveSwitcher />
             </div>
