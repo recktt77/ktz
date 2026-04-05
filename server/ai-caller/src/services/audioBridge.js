@@ -232,6 +232,22 @@ function startBridge(systemPrompt) {
           try {
             const event = JSON.parse(data.toString());
 
+            // Log all GPT events for debugging (skip audio deltas to avoid spam)
+            if (event.type !== 'response.audio.delta' && event.type !== 'input_audio_buffer.speech_started') {
+              const logData = { audioSocketId, type: event.type, error: event.error, name: event.name, status: event.response?.status, statusDetails: event.response?.status_details };
+              // Log full session config to verify modalities
+              if (event.type === 'session.created' || event.type === 'session.updated') {
+                logData.sessionModalities = event.session?.modalities;
+                logData.sessionVoice = event.session?.voice;
+                logData.outputAudioFormat = event.session?.output_audio_format;
+              }
+              // Log response.done output items to see what was actually produced
+              if (event.type === 'response.done') {
+                logData.outputItems = event.response?.output?.map(o => ({ type: o.type, role: o.role, contentTypes: o.content?.map(c => c.type) }));
+              }
+              logger.info(logData, 'gpt_event');
+            }
+
             if (event.type === 'response.audio.delta' && event.delta) {
               const pcm24k = Buffer.from(event.delta, 'base64');
               const pcm8k = downsample24to8(pcm24k);
