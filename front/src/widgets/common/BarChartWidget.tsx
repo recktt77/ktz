@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useChartHistory } from '@/hooks/useTelemetry';
+import { useTelemetry } from '@/hooks/useTelemetry';
+import { METRIC_UNITS } from '@/lib/constants';
 
 interface MetricDef {
   key: string;
@@ -19,25 +20,52 @@ interface Props {
   height?: number;
 }
 
+/** Known reasonable maximums per metric for bar percentage scaling */
+const METRIC_MAX: Record<string, number> = {
+  tractive_effort_kn: 400,
+  catenary_current_a: 600,
+  energy_consumption_kw: 3000,
+  brake_system_pressure_bar: 10,
+  regenerative_braking_power_kw: 800,
+  speed_kmh: 160,
+  catenary_voltage_kv: 30,
+  engine_rpm: 2200,
+  engine_load_pct: 100,
+  fuel_level_pct: 100,
+  fuel_consumption_lph: 500,
+};
+
 /**
- * Reference-style bar chart with underline tabs and test-tube pill bars.
+ * Horizontal bar chart widget showing current metric values with tabs.
  */
 export function BarChartWidget({ locoId, tabs }: Props) {
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
-  const [period] = useState('Weekly');
+  const telemetry = useTelemetry(locoId);
+
   const activeMetrics = useMemo(
     () => tabs.find((t) => t.id === activeTab)?.metrics ?? [],
     [tabs, activeTab],
   );
 
+  // Read current values from telemetry
+  const bars = useMemo(() => {
+    if (!telemetry) return activeMetrics.map((m) => ({ ...m, value: 0, pct: 0, unit: METRIC_UNITS[m.key] ?? '' }));
+    return activeMetrics.map((m) => {
+      const raw = (telemetry as unknown as Record<string, unknown>)[m.key];
+      const value = typeof raw === 'number' ? raw : 0;
+      const max = METRIC_MAX[m.key] ?? 1000;
+      return { ...m, value, pct: Math.min(value / max, 1), unit: METRIC_UNITS[m.key] ?? '' };
+    });
+  }, [telemetry, activeMetrics]);
+
   return (
-    <div className="chart-card" style={{ overflow: 'hidden' }}>
-      {/* Header: title left, tabs center-right, period dropdown right */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+    <div className="chart-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 0 }}>
         <div style={{ fontSize: '0.92rem', fontWeight: 600, color: '#eae6df' }}>
           Управление движением
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -53,92 +81,49 @@ export function BarChartWidget({ locoId, tabs }: Props) {
               {tab.label}
             </button>
           ))}
-          <span style={{
-            fontSize: '0.78rem', color: '#6b6155', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 4,
-          }}>
-            {period} <span style={{ fontSize: '0.6rem' }}>▼</span>
-          </span>
         </div>
       </div>
 
-      {/* Y-axis + Bars area */}
-      <div style={{ flex: 1, display: 'flex', gap: 8, minHeight: 0, overflow: 'hidden' }}>
-        {/* Y-axis labels */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: 24, width: 36 }}>
-          {['30k', '20k', '10k', '05k', '00k'].map((label) => (
-            <span key={label} style={{ fontSize: '0.68rem', color: '#4a4238', textAlign: 'right' }}>{label}</span>
-          ))}
-        </div>
-        {/* Bars */}
-        <div style={{ flex: 1 }}>
-          <BarGroup locoId={locoId} metrics={activeMetrics} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BarGroup({ locoId, metrics }: { locoId: string | null; metrics: MetricDef[] }) {
-  const metricHistories = metrics.map((m) => ({
-    ...m,
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    history: useChartHistory(locoId, m.key),
-  }));
-
-  const BUCKET_COUNT = 7;
-  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  const buckets = useMemo(() => {
-    const result: { label: string; values: { color: string; value: number; raw: number }[] }[] = [];
-    let globalMax = 1;
-    for (const mh of metricHistories) {
-      const points = mh.history.slice(-BUCKET_COUNT);
-      for (const p of points) if (p.value > globalMax) globalMax = p.value;
-    }
-    for (let i = 0; i < BUCKET_COUNT; i++) {
-      const values = metricHistories.map((mh) => {
-        const points = mh.history.slice(-BUCKET_COUNT);
-        const raw = points[i]?.value ?? 0;
-        return { color: mh.color, value: raw / globalMax, raw };
-      });
-      result.push({ label: DAYS[i] ?? `${i + 1}`, values });
-    }
-    return result;
-  }, [metricHistories]);
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '100%', paddingBottom: 0 }}>
-      {buckets.map((bucket, bi) => (
-        <div key={bi} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, flex: 1, width: '100%', justifyContent: 'center' }}>
-            {bucket.values.map((v, vi) => {
-              const h = Math.max(v.value * 100, 6);
-              return (
-                <div key={vi} title={`${v.raw.toFixed(1)}`} style={{
-                  width: 18,
-                  height: `${h}%`,
-                  borderRadius: 10,
-                  background: `linear-gradient(to top, ${v.color}40, ${v.color}bb ${60}%, ${v.color} 100%)`,
-                  transition: 'height 0.7s ease-out',
-                  position: 'relative',
-                  boxShadow: `inset 0 -20px 20px ${v.color}15`,
-                }}>
-                  {/* Top highlight (test-tube cap) */}
-                  <div style={{
-                    position: 'absolute', top: 3, left: 3, right: 3, height: 6,
-                    borderRadius: 6,
-                    background: `linear-gradient(to bottom, rgba(255,255,255,0.25), transparent)`,
-                  }} />
-                </div>
-              );
-            })}
+      {/* Metric bars — vertically centered */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 22, width: '100%' }}>
+          {bars.map((bar) => (
+          <div key={bar.key}>
+            {/* Label row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: '0.78rem', color: '#9a9088', fontWeight: 500 }}>{bar.label}</span>
+              <span style={{ fontSize: '0.82rem', color: '#eae6df', fontWeight: 600 }}>
+                {bar.value < 10 ? bar.value.toFixed(1) : Math.round(bar.value)} <span style={{ fontSize: '0.7rem', color: '#6b6155', fontWeight: 400 }}>{bar.unit}</span>
+              </span>
+            </div>
+            {/* Bar track */}
+            <div style={{
+              height: 10, borderRadius: 6,
+              background: 'rgba(255,255,255,0.04)',
+              overflow: 'hidden',
+              position: 'relative',
+            }}>
+              {/* Filled portion */}
+              <div style={{
+                height: '100%',
+                width: `${Math.max(bar.pct * 100, 1)}%`,
+                borderRadius: 6,
+                background: `linear-gradient(90deg, ${bar.color}60, ${bar.color})`,
+                transition: 'width 0.7s ease-out',
+                position: 'relative',
+              }}>
+                {/* Shine effect */}
+                <div style={{
+                  position: 'absolute', top: 1, left: 4, right: 4, height: 3,
+                  borderRadius: 3,
+                  background: 'linear-gradient(to bottom, rgba(255,255,255,0.3), transparent)',
+                }} />
+              </div>
+            </div>
           </div>
-          <span style={{ fontSize: '0.72rem', fontWeight: 500, color: '#4a4238' }}>
-            {bucket.label}
-          </span>
+        ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 }
