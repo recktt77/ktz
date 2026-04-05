@@ -70,6 +70,9 @@ app.use('/thresholds', authMiddleware, requireRole('admin', 'engineer'), proxy(c
 app.use('/weights', authMiddleware, requireRole('admin', 'engineer'), proxy(config.services.normalization, { '^/': '/weights/' }));
 app.use('/reports', authMiddleware, proxy(config.services.normalization, { '^/': '/reports/' }));
 
+// ─── Telemetry Simulator (:8084) — admin only ───────────
+app.use('/simulator', authMiddleware, requireRole('admin'), proxy(config.services.simulator, { '^/': '/simulator/' }));
+
 // ─── AI-Caller Service (:8087) ───────────────────────────
 app.use('/ai-caller', authMiddleware, proxy(config.services.aiCaller, { '^/ai-caller': '/' }));
 
