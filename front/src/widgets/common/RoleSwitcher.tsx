@@ -15,10 +15,11 @@ export function RoleSwitcher() {
   const setRole = useDashboardStore((s) => s.setRole);
   const user = useAuthStore((s) => s.user);
 
-  // Show only roles the user has. If no user (dev mode), show all.
-  const visibleRoles = user?.roles?.length
-    ? allRoles.filter((r) => user.roles.includes(r.id))
-    : allRoles;
+  // Admin sees all roles. Regular users see only their assigned roles.
+  const isAdmin = user?.roles?.includes('admin');
+  const visibleRoles = !user?.roles?.length || isAdmin
+    ? allRoles
+    : allRoles.filter((r) => user.roles.includes(r.id));
 
   // Don't render switcher if user has only one role
   if (visibleRoles.length <= 1) return null;

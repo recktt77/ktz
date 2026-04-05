@@ -2,23 +2,24 @@ import type { LocomotiveModel } from '@/types';
 
 /**
  * Resolve WebSocket base URL.
- * In production (served via nginx), auto-detect from current page URL
- * so the browser reuses the same TLS session (critical for self-signed certs).
- * In development, use VITE_WS_URL env var (e.g. ws://localhost:8080).
+ * If VITE_WS_URL is set, always use it (dev or staging).
+ * In production (served via nginx with no env override), auto-detect from page URL.
  */
 function resolveWsUrl(): string {
   const env = import.meta.env.VITE_WS_URL;
-  // If explicitly set to a non-localhost value, use it
-  if (env && !/localhost|127\.0\.0\.1/.test(env)) return env;
-  // Auto-detect from page URL (works in any deployment)
+  if (env) return env;
+  // Auto-detect from page URL (production behind nginx)
   if (typeof window !== 'undefined') {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${proto}//${window.location.host}`;
   }
-  return env || 'ws://localhost:8086';
+  return 'ws://localhost:8086';
 }
 
 export const WS_URL = resolveWsUrl();
+
+/** Whether to use mock data stream instead of real backend WebSocket */
+export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 // Backend service base URLs (defaults for dev without API Gateway)
 export const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8081';

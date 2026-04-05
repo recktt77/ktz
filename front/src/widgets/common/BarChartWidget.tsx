@@ -20,60 +20,66 @@ interface Props {
 }
 
 /**
- * Reference-style bar chart with tabs.
- * Shows last N time-buckets as rounded colorful bars.
+ * Reference-style bar chart with underline tabs and test-tube pill bars.
  */
-export function BarChartWidget({ locoId, tabs, height = 240 }: Props) {
+export function BarChartWidget({ locoId, tabs }: Props) {
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
+  const [period] = useState('Weekly');
   const activeMetrics = useMemo(
     () => tabs.find((t) => t.id === activeTab)?.metrics ?? [],
     [tabs, activeTab],
   );
 
   return (
-    <div className="chart-card">
-      {/* Header with tabs */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="chart-card__header mb-0">Управление движением</div>
-        <div className="flex items-center gap-0.5" style={{ background: 'var(--bg-inset)', borderRadius: 'var(--radius-sm)', padding: 2 }}>
+    <div className="chart-card" style={{ overflow: 'hidden' }}>
+      {/* Header: title left, tabs center-right, period dropdown right */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ fontSize: '0.92rem', fontWeight: 600, color: '#eae6df' }}>
+          Управление движением
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
-              style={activeTab === tab.id
-                ? { background: 'var(--bg-elevated)', color: 'var(--text-primary)' }
-                : { background: 'transparent', color: 'var(--text-muted)' }}
               onClick={() => setActiveTab(tab.id)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '4px 0', fontSize: '0.8rem', fontWeight: 500,
+                color: activeTab === tab.id ? '#eae6df' : '#6b6155',
+                borderBottom: activeTab === tab.id ? '2px solid #eae6df' : '2px solid transparent',
+                transition: 'all 0.2s',
+              }}
             >
               {tab.label}
             </button>
           ))}
+          <span style={{
+            fontSize: '0.78rem', color: '#6b6155', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 4,
+          }}>
+            {period} <span style={{ fontSize: '0.6rem' }}>▼</span>
+          </span>
         </div>
       </div>
 
-      {/* Bars */}
-      <div style={{ height }}>
-        <BarGroup locoId={locoId} metrics={activeMetrics} height={height} />
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-3 mt-2">
-        {activeMetrics.map((m) => (
-          <div key={m.key} className="flex items-center gap-1.5">
-            <span
-              className="inline-block w-2.5 h-2.5 rounded-full"
-              style={{ background: m.color }}
-            />
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{m.label}</span>
-          </div>
-        ))}
+      {/* Y-axis + Bars area */}
+      <div style={{ flex: 1, display: 'flex', gap: 8, minHeight: 0, overflow: 'hidden' }}>
+        {/* Y-axis labels */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: 24, width: 36 }}>
+          {['30k', '20k', '10k', '05k', '00k'].map((label) => (
+            <span key={label} style={{ fontSize: '0.68rem', color: '#4a4238', textAlign: 'right' }}>{label}</span>
+          ))}
+        </div>
+        {/* Bars */}
+        <div style={{ flex: 1 }}>
+          <BarGroup locoId={locoId} metrics={activeMetrics} />
+        </div>
       </div>
     </div>
   );
 }
 
-function BarGroup({ locoId, metrics, height }: { locoId: string | null; metrics: MetricDef[]; height: number }) {
-  // Collect last 7 data points per metric for bar chart
+function BarGroup({ locoId, metrics }: { locoId: string | null; metrics: MetricDef[] }) {
   const metricHistories = metrics.map((m) => ({
     ...m,
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -81,61 +87,54 @@ function BarGroup({ locoId, metrics, height }: { locoId: string | null; metrics:
   }));
 
   const BUCKET_COUNT = 7;
-  const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  // Compute buckets: take last BUCKET_COUNT points from history, normalize to 0-1
   const buckets = useMemo(() => {
     const result: { label: string; values: { color: string; value: number; raw: number }[] }[] = [];
-
-    // Find global max across all metrics for scaling
     let globalMax = 1;
     for (const mh of metricHistories) {
       const points = mh.history.slice(-BUCKET_COUNT);
-      for (const p of points) {
-        if (p.value > globalMax) globalMax = p.value;
-      }
+      for (const p of points) if (p.value > globalMax) globalMax = p.value;
     }
-
     for (let i = 0; i < BUCKET_COUNT; i++) {
       const values = metricHistories.map((mh) => {
         const points = mh.history.slice(-BUCKET_COUNT);
         const raw = points[i]?.value ?? 0;
-        return {
-          color: mh.color,
-          value: raw / globalMax,
-          raw,
-        };
+        return { color: mh.color, value: raw / globalMax, raw };
       });
       result.push({ label: DAYS[i] ?? `${i + 1}`, values });
     }
-
     return result;
   }, [metricHistories]);
 
-  const barMaxH = height - 30;
-  const barWidth = 14;
-
   return (
-    <div className="flex items-end justify-around h-full px-2">
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '100%', paddingBottom: 0 }}>
       {buckets.map((bucket, bi) => (
-        <div key={bi} className="flex flex-col items-center gap-1.5">
-          <div className="flex items-end gap-1.5" style={{ height: barMaxH }}>
-            {bucket.values.map((v, vi) => (
-              <div
-                key={vi}
-                className="transition-all duration-700 ease-out"
-                style={{
-                  width: barWidth,
-                  borderRadius: '6px 6px 4px 4px',
-                  height: `${Math.max(v.value * 100, 4)}%`,
-                  background: `linear-gradient(to top, ${v.color}80, ${v.color})`,
-                  boxShadow: `0 0 8px ${v.color}30`,
-                }}
-                title={`${v.raw.toFixed(1)}`}
-              />
-            ))}
+        <div key={bi} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, flex: 1, width: '100%', justifyContent: 'center' }}>
+            {bucket.values.map((v, vi) => {
+              const h = Math.max(v.value * 100, 6);
+              return (
+                <div key={vi} title={`${v.raw.toFixed(1)}`} style={{
+                  width: 18,
+                  height: `${h}%`,
+                  borderRadius: 10,
+                  background: `linear-gradient(to top, ${v.color}40, ${v.color}bb ${60}%, ${v.color} 100%)`,
+                  transition: 'height 0.7s ease-out',
+                  position: 'relative',
+                  boxShadow: `inset 0 -20px 20px ${v.color}15`,
+                }}>
+                  {/* Top highlight (test-tube cap) */}
+                  <div style={{
+                    position: 'absolute', top: 3, left: 3, right: 3, height: 6,
+                    borderRadius: 6,
+                    background: `linear-gradient(to bottom, rgba(255,255,255,0.25), transparent)`,
+                  }} />
+                </div>
+              );
+            })}
           </div>
-          <span className="text-xs font-medium" style={{ color: 'var(--text-dim)' }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 500, color: '#4a4238' }}>
             {bucket.label}
           </span>
         </div>

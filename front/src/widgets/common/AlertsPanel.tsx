@@ -1,5 +1,4 @@
 import { useDashboardStore } from '@/store';
-import type { AlertSeverity } from '@/types';
 
 interface Props {
   locomotiveId?: string | null;
@@ -10,44 +9,47 @@ export function AlertsPanel({ locomotiveId }: Props) {
   const alerts = locomotiveId
     ? allAlerts.filter((a) => a.locomotive_id === locomotiveId)
     : allAlerts;
-  const active = alerts.filter((a) => !a.acknowledged);
 
   return (
-    <div className="alert-rail">
-      <div className="alert-rail__title">
-        Оповещения
-        {active.length > 0 && (
-          <span className="alert-rail__count">{active.length}</span>
-        )}
-      </div>
-      <div className="space-y-0.5" style={{ overflowY: 'auto', flex: 1 }}>
-        {alerts.length === 0 ? (
-          <div className="py-6 text-center text-sm" style={{ color: 'var(--text-dim)' }}>
-            Нет оповещений
+    <div style={{
+      background: 'var(--bg-card)',
+      borderRadius: 20,
+      border: '1px solid rgba(255,255,255,0.04)',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
+      padding: '18px 16px',
+      height: '100%',
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 0,
+    }}>
+      {alerts.length === 0 ? (
+        <div style={{ padding: '24px 0', textAlign: 'center', color: '#4a4238', fontSize: '0.82rem' }}>
+          Нет оповещений
+        </div>
+      ) : (
+        alerts.map((alert) => (
+          <div
+            key={alert.id}
+            style={{
+              padding: '12px 0',
+              borderBottom: '1px solid rgba(255,255,255,0.03)',
+              opacity: alert.acknowledged ? 0.3 : 1,
+            }}
+          >
+            <span style={{
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              fontStyle: 'italic',
+              color: alert.severity === 'critical' ? '#e8943a'
+                : alert.severity === 'warning' ? '#f5b946' : '#11b7e7',
+              lineHeight: 1.5,
+            }}>
+              ! {alert.title}
+            </span>
           </div>
-        ) : (
-          alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className="py-1.5"
-              style={{ opacity: alert.acknowledged ? 0.35 : 1 }}
-            >
-              <span
-                className="text-sm font-semibold"
-                style={{
-                  color: alert.severity === 'critical'
-                    ? '#e8943a'
-                    : alert.severity === 'warning'
-                      ? '#f5b946'
-                      : 'var(--accent-cyan)',
-                }}
-              >
-                ! {alert.title}
-              </span>
-            </div>
-          ))
-        )}
-      </div>
+        ))
+      )}
     </div>
   );
 }

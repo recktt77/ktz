@@ -129,9 +129,10 @@ function FitBounds({ stations }: { stations: MapStationNode[] }) {
 interface RailwayMapProps {
   className?: string;
   compact?: boolean; // smaller version for dashboards
+  hideFilter?: boolean; // hide the status filter overlay
 }
 
-export function RailwayMap({ className = '', compact = false }: RailwayMapProps) {
+export function RailwayMap({ className = '', compact = false, hideFilter = false }: RailwayMapProps) {
   const { stations, routes, loading, source } = useMapData();
   const fleet = useMapFleet(stations, routes);
   const [selectedLocoId, setSelectedLocoId] = useState<string | null>(null);
@@ -160,15 +161,15 @@ export function RailwayMap({ className = '', compact = false }: RailwayMapProps)
   }, []);
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-gray-800 ${className}`}>
+    <div className={`relative overflow-hidden rounded-2xl border border-gray-800 ${className}`} style={{ height: '100%' }}>
       {/* Map */}
       <MapContainer
         center={KZ_CENTER}
         zoom={KZ_ZOOM}
-        className={compact ? 'h-[400px] w-full' : 'h-[600px] w-full'}
+        className="w-full"
         zoomControl={!compact}
         attributionControl={true}
-        style={{ background: '#0f172a' }}
+        style={{ background: '#0f172a', height: '100%', minHeight: compact ? 200 : 400 }}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -186,12 +187,14 @@ export function RailwayMap({ className = '', compact = false }: RailwayMapProps)
       </MapContainer>
 
       {/* Legend overlay */}
-      <MapLegend
-        statusFilter={statusFilter}
-        onFilterChange={setStatusFilter}
-        fleetCount={fleet.length}
-        compact={compact}
-      />
+      {!hideFilter && (
+        <MapLegend
+          statusFilter={statusFilter}
+          onFilterChange={setStatusFilter}
+          fleetCount={fleet.length}
+          compact={compact}
+        />
+      )}
 
       {/* Fleet count / data source badge */}
       <div className="absolute left-3 top-3 z-[1000] flex items-center gap-1.5 rounded-lg bg-gray-900/90 px-2.5 py-1 text-xs font-medium text-gray-300 backdrop-blur-sm">
